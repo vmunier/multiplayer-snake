@@ -52,18 +52,18 @@ object Application extends Controller {
     }
   }
 
+  // The first message is
   def joinGame(uuid: UUID) = WebSocket.async[JsValue] { request =>
     withGameWS(uuid) { game =>
       game.join.map { snakeId =>
         val iteratee = Iteratee.foreach[JsValue] { event =>
-          println("received event: " + event)
           Json.fromJson[ClientNotif](event).map { clientNotif =>
-            println("clientNotif: " + clientNotif)
             game.moveSnake(snakeId, clientNotif.move)
           }
         }
         game.start()
-        (iteratee, game.notifsEnumerator.map(gameNotif => Json.toJson(gameNotif)))
+        val playerSnakeIdEnum: Enumerator[JsValue] = Enumerator(Json.obj("playerSnakeId" -> snakeId))
+        (iteratee, playerSnakeIdEnum.andThen(game.notifsEnumerator.map(gameNotif => Json.toJson(gameNotif))))
       }
     }
   }

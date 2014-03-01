@@ -22,24 +22,24 @@ object Canvas {
     canvas
   }
 
-  def render(snake: Snake, foods: Seq[Block], foodsInDigestion: Seq[Block]) = {
+  def render(playerNbEatenBlocks: Int, nonEmptyBlocks: Seq[Block]) = {
     // clear window
     ctx.clearRect(0, 0, canvas.width, canvas.height)
 
-    renderBlocks(snake.blocks ++ foods ++ foodsInDigestion)
-    displayScore(snake.blocksEaten)
+    renderBlocks(nonEmptyBlocks)
+    displayScore(playerNbEatenBlocks)
 
     if (Game.gameOver) {
       displayGameOver()
     }
   }
 
-  private def displayScore(blocksEaten: Int) = {
+  private def displayScore(nbEatenBlocks: Int) = {
     ctx.fillStyle = "black"
     ctx.font = "20px Arial"
     ctx.textAlign = "left"
     ctx.textBaseline = "top"
-    ctx.fillText("Blocks eaten: " + blocksEaten, 32, 32)
+    ctx.fillText("Blocks eaten: " + nbEatenBlocks, 32, 32)
   }
 
   private def displayGameOver() = {

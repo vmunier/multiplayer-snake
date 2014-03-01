@@ -1,6 +1,8 @@
 @(gameUUID: java.util.UUID)(implicit request: RequestHeader)
 
-// The Scala.js code should create a window.receiveGameNotif(jsonData) function
+// The Scala.js code should provide implementations for the following functions:
+// - window.game.receiveGameNotif(object)
+// - window.game.receivePlayerSnakeId(integer)
 (function() {
   var WS = window['MozWebSocket'] ? MozWebSocket : WebSocket;
   var gameSocket = new WS("@routes.Application.joinGame(gameUUID).webSocketURL()");
@@ -12,10 +14,13 @@
 
   var receiveEvent = function(event) {
     var data = JSON.parse(event.data);
+
     if(data.error) {
       gameSocket.close();
+    } else if (data.playerSnakeId !== undefined) {
+      window.game.receivePlayerSnakeId(data.playerSnakeId);
     } else {
-      window.receiveGameNotif(data);
+      window.game.receiveGameNotif(data);
     }
   };
 

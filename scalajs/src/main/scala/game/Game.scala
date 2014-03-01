@@ -5,126 +5,104 @@ import js.Dynamic.{ global => g }
 import org.scalajs.dom
 import org.scalajs.dom.extensions._
 import org.scalajs.dom.HTMLCanvasElement
+import shared.models.mutable
 import shared.models.Snake
 import shared.models.Block
 import shared.models.Position
 import shared.models.Colors
 import shared.models.Moves._
 import shared.models.GameConstants
+import shared.models.GameNotif
+import shared.models.IdTypes.SnakeId
+import shared.models.SnakeMove
+import shared.services.SnakeService
+import shared.services.BlockService
 
-
-trait GameVars extends GameConstants {
+trait GameVars extends mutable.GameFood with GameConstants {
 
   lazy val BlockSize = Math.min(
-  (Canvas.windowHeight / NbBlocksInHeight).toInt,
-  (Canvas.windowWidth / NbBlocksInWidth).toInt)
+    (Canvas.windowHeight / NbBlocksInHeight).toInt,
+    (Canvas.windowWidth / NbBlocksInWidth).toInt)
 
   val canvas = Canvas.init()
 
-  var snake = Snake(
-    head = Block(Position(0, 0), Colors.nextColor.rgb))
+  var snakes: Map[SnakeId, Snake] = Map()
+  var playerSnakeId: SnakeId = new SnakeId(0)
 
-  var moveDoneInLastSecond = false
   var gameOver = false
   var win = false
+
+  g.window.game = new js.Object
+
+  g.window.game.receivePlayerSnakeId = (snakeId: js.Number) => {
+    println("received snakeId : " + snakeId)
+    playerSnakeId = new SnakeId(snakeId.toInt)
+  }
+
 }
 
 object Game extends GameVars {
-  GameSocket.init()
-  /*
   Keyboard.init()
 
-
-  def updateMove(): Unit = {
-    val noTail = snake.tail.isEmpty
-    val prevMove = snake.move
-    val newMove =
-      if (Keyboard.isHoldingLeft && (snake.move != Right || noTail)) Left
-      else if (Keyboard.isHoldingRight && (snake.move != Left || noTail)) Right
-      else if (Keyboard.isHoldingUp && (snake.move != Down || noTail)) Up
-      else if (Keyboard.isHoldingDown && (snake.move != Up || noTail)) Down
-      else snake.move
-
-    if (prevMove != newMove) {
-      snake = snake.copy(move = newMove)
-      moveDoneInLastSecond = true
-    }
-  }
-
-  var secondsAcc: js.Number = 0
-
-  def update(seconds: js.Number) = {
+  def update(gameNotif: GameNotif) = {
     if (gameOver) {
       // do nothing
-    } else if (snake.blocksEaten >= (blockPositions.size / 2)) {
-      //} else if (Food.availablePositions.isEmpty) {
-      gameOver = true
-      win = true
     } else {
-      if (!moveDoneInLastSecond) {
-        updateMove()
-      }
-      secondsAcc += seconds
-      if (secondsAcc * snake.speed >= 1) {
-        moveDoneInLastSecond = false
-        disposeNewFood()
-        moveSnake()
-        handleCollisions()
-        secondsAcc = 0
+      updateMove(gameNotif.snakes)
+      updateFood(gameNotif.foods)
+
+      for ((snakeId, snake) <- snakes) {
+        moveSnake(snakeId, snake)
+        handleCollisions(snakeId, snake)
       }
     }
   }
 
-  private def handleCollisions() = {
-    val snakeBitesItsQueue = snake.tail.map(_.pos).contains(snake.head.pos)
+  def render() = {
+    Canvas.render(snakes.get(playerSnakeId).map(_.nbEatenBlocks).getOrElse(0), (snakes.values.flatMap(_.blocks) ++ foods ++ foodsInDigestion).toSeq)
+  }
 
-    if (snakeBitesItsQueue) {
-      gameOver = true
+  private def updateMove(snakeMoves: Set[SnakeMove]): Unit = {
+    for {
+      SnakeMove(snakeId, newMove) <- snakeMoves
+      snake <- snakes.get(snakeId)
+    } {
+      snakes += snakeId -> snake.copy(move = newMove)
+    }
+  }
+
+  private def updateFood(newFoods: Set[Block]): Unit = {
+    for (newFood <- newFoods) {
+      foods += newFood
+    }
+  }
+
+  private def handleCollisions(snakeId: SnakeId, snake: Snake) = {
+    if (snake.bitesItsQueue) {
+      // gameOver for snake
     } else {
-      Food.foods.filter(food => food.pos == snake.head.pos).headOption.map { eatenFood =>
-        Food.startDigestionForFood(eatenFood)
-        snake = snake.copy(blocksEaten = snake.blocksEaten + 1)
+      // digested food
+      for (eatenFood <- BlockService.findCollision(snake.head, foods)) {
+        startDigestionForFood(eatenFood)
+        snakes += snakeId -> snake.copy(nbEatenBlocks = snake.nbEatenBlocks + 1)
       }
 
-      Food.foodsInDigestion.filter(food => food.pos == snake.blocks.last.pos).headOption.map { foodReachingEndQueue =>
-        snake = snake.copy(tail = snake.tail ++ Seq(foodReachingEndQueue))
-        Food.endDigestionForFood(foodReachingEndQueue)
+      // food reaching queue
+      for (foodReachingEndQueue <- BlockService.findCollision(snake.blocks.last, foodsInDigestion)) {
+        snakes += snakeId -> snake.copy(tail = snake.tail ++ Seq(foodReachingEndQueue))
+        endDigestionForFood(foodReachingEndQueue)
       }
     }
   }
 
-  private def disposeNewFood() = {
-    if (Food.foods.isEmpty ||
-      (Food.foods.size < MaxFoodAtSameTime && js.Math.abs(Math.random() * FoodPeriodApparition).toInt == 0)) {
-      Food.addRandomFood()
-    }
+  private def moveSnake(snakeId: SnakeId, snake: Snake) = {
+    println("in moveSnake")
+    val movedSnake = SnakeService.moveSnake(snake, NbBlocksInWidth, NbBlocksInHeight)
+    println("movedSnake : " + movedSnake)
+    snakes += snakeId -> movedSnake
   }
 
-  def moveSnake() = {
-    // snake = snake.copy(tail = snake.moveTailForward())
-
-    val headPos = snake.head.pos
-
-    val newHeadPos = Position(
-      x = (NbBlocksInWidth + headPos.x + horizontal) % NbBlocksInWidth,
-      y = (NbBlocksInHeight + headPos.y + vertical) % NbBlocksInHeight)
-
-    snake = snake.copy(head = snake.head.copy(pos = newHeadPos))
-  }
-
-  def horizontal() = snake.move match {
-    case Left => -1
-    case Right => 1
-    case _ => 0
-  }
-
-  def vertical() = snake.move match {
-    case Up => -1
-    case Down => 1
-    case _ => 0
-  }
-*/
   def main(): Unit = {
-    //new GameLoop().start(update, () => Canvas.render(snake, Food.foods.toSeq, Food.foodsInDigestion.toSeq))
+    GameLoop(update, render).start()
   }
 }

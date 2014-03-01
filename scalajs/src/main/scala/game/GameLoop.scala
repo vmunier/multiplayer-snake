@@ -2,23 +2,22 @@ package game
 
 import scala.scalajs.js
 import js.Dynamic.{ global => g }
+import org.scalajs.dom
+import org.scalajs.dom.extensions._
 
-class GameLoop {
+import shared.models._
+import shared.models.IdTypes.SnakeId
+import shared.models.Moves._
 
-  var prev = js.Date.now()
-  def loop(update: (js.Number) => Unit, render: () => Unit): () => Unit = () => {
-    g.window.requestAnimationFrame(loop(update, render))
-
-    val now = js.Date.now()
-    val delta = now - prev
-
-    update(delta / 1000)
+case class GameLoop(update: (GameNotif) => Unit, render: () => Unit) {
+  val receiveGameNotif = (gameNotif: GameNotif) => {
+    println("notif  : " + gameNotif)
+    println("foods : " + gameNotif.snakes.toSeq.map(_.move))
+    update(gameNotif)
     render()
-
-    prev = now
   }
 
-  def start(update: (js.Number) => Unit, render: () => Unit) = {
-    loop(update, render)()
+  def start() = {
+    g.window.game.receiveGameNotif = (x: JsGameNotif) => receiveGameNotif(GameNotifParser.parse(x))
   }
 }

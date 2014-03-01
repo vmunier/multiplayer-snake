@@ -123,7 +123,7 @@ class GameActor(notifsChannel: Channel[GameNotif]) extends Actor with StartedGam
       // digested food
       for (eatenFood <- BlockService.findCollision(snake.head, foods)) {
         startDigestionForFood(eatenFood)
-        snakes += snakeId -> snake.copy(blocksEaten = snake.blocksEaten + 1)
+        snakes += snakeId -> snake.copy(nbEatenBlocks = snake.nbEatenBlocks + 1)
       }
 
       // food reaching queue
