@@ -10,8 +10,7 @@ trait GameConstants {
   val MaxFoodAtSameTime = 3
 
   // real GameTickInterval
-  //val GameTickInterval: FiniteDuration = 200.milliseconds
-  val GameTickInterval: FiniteDuration = 3.seconds
+  val GameTickInterval: FiniteDuration = 100.milliseconds
   val NewFoodInterval: FiniteDuration = 3.seconds
 
   val blockPositions =

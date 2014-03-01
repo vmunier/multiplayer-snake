@@ -1,6 +1,7 @@
-@(gameUUID: java.util.UUID)(implicit request: RequestHeader)
+@(gameUUID: java.util.UUID, maybeCreatorUUID: Option[java.util.UUID])(implicit request: RequestHeader)
 
 // The Scala.js code should provide implementations for the following functions:
+// - window.game.receiveGameInitNotif(object)
 // - window.game.receiveGameNotif(object)
 // - window.game.receivePlayerSnakeId(integer)
 (function() {
@@ -8,19 +9,24 @@
   var gameSocket = new WS("@routes.Application.joinGame(gameUUID).webSocketURL()");
 
   var sendMove = function(move) {
-    console.log("send " + move);
     gameSocket.send(JSON.stringify({move: move}));
   };
 
+  @maybeCreatorUUID.map { creatorUUID =>
+    $(".startGameBtn").click(function(){
+      $.ajax({url:"@routes.Application.startGame(gameUUID, creatorUUID)"}); 
+    });
+  }
   var receiveEvent = function(event) {
     var data = JSON.parse(event.data);
-
     if(data.error) {
       gameSocket.close();
-    } else if (data.playerSnakeId !== undefined) {
-      window.game.receivePlayerSnakeId(data.playerSnakeId);
+    } else if (data.notifType == "gameInit") {
+      window.game.receiveGameInitNotif(data);
+    } else if (data.notifType == "playerSnakeId") {
+      window.game.receivePlayerSnakeId(data);	
     } else {
-      window.game.receiveGameNotif(data);
+      window.game.receiveGameLoopNotif(data);
     }
   };
 

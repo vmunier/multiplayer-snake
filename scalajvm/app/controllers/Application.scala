@@ -1,5 +1,6 @@
 package controllers
 
+
 import java.util.UUID
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
@@ -18,6 +19,7 @@ import play.api.libs.json.Json
 import play.api.mvc._
 import shared.models.Moves._
 import models.ClientNotif
+import shared.models.PlayerSnakeIdNotif
 
 object Application extends Controller {
 
@@ -41,18 +43,28 @@ object Application extends Controller {
   }
 
   def createGame() = Action.async { request =>
-    ConnectionsActor.createGame.map { gameId =>
-      Redirect(routes.Application.game(gameId.id))
+    ConnectionsActor.createGame.map { game=>
+      Redirect(routes.Application.game(game.gameId.id, Some(game.creatorUUID)))
     }
   }
 
-  def game(uuid: UUID) = Action.async { request =>
+  def startGame(gameUUID: UUID, creatorUUID: UUID) = Action.async { request =>
+    withGame(gameUUID) { game =>
+      if (game.creatorUUID != creatorUUID) {
+        Forbidden(s"$creatorUUID is not the right creator UUID for the game $gameUUID")
+      } else {
+        game.start()
+        Ok(s"Game $gameUUID started")
+      }
+    }
+  }
+
+  def game(uuid: UUID, maybeCreatorUUID: Option[UUID]) = Action.async { request =>
     withGame(uuid) { game =>
-      Ok(views.html.game(game.gameId.id))
+      Ok(views.html.game(game.gameId.id, maybeCreatorUUID))
     }
   }
 
-  // The first message is
   def joinGame(uuid: UUID) = WebSocket.async[JsValue] { request =>
     withGameWS(uuid) { game =>
       game.join.map { snakeId =>
@@ -61,15 +73,14 @@ object Application extends Controller {
             game.moveSnake(snakeId, clientNotif.move)
           }
         }
-        game.start()
-        val playerSnakeIdEnum: Enumerator[JsValue] = Enumerator(Json.obj("playerSnakeId" -> snakeId))
-        (iteratee, playerSnakeIdEnum.andThen(game.notifsEnumerator.map(gameNotif => Json.toJson(gameNotif))))
+        val playerSnakeIdEnum = Enumerator(Json.toJson(PlayerSnakeIdNotif(snakeId)))
+        (iteratee, playerSnakeIdEnum.andThen(game.notifsEnumerator))
       }
     }
   }
 
-  def gameJs(uuid: UUID) = Action { implicit request =>
-    Ok(views.js.game(uuid))
+  def gameJs(gameUUID: UUID, maybeCreatorUUID: Option[UUID]) = Action { implicit request =>
+    Ok(views.js.game(gameUUID, maybeCreatorUUID))
   }
 
   private def withGameWS(uuid: UUID)(interfaces: Game => Future[(Iteratee[JsValue, _], Enumerator[JsValue])]): Future[(Iteratee[JsValue, _], Enumerator[JsValue])] = {

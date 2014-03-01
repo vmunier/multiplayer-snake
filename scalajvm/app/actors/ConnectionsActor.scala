@@ -16,16 +16,16 @@ import play.api.libs.concurrent.Akka
 
 
 object ConnectionsActor {
-  case class CreateGame(gameIdPromise: Promise[GameId])
+  case class CreateGame(gamePromise: Promise[Game])
   case class GetGame(gameId: GameId, gamePromise: Promise[Option[Game]])
   case class GetAllGames(gamesPromise: Promise[Seq[Game]])
 
   val connectionsActor = Akka.system.actorOf(Props[ConnectionsActor])
 
-  def createGame(): Future[GameId] = {
-    val gameIdPromise = Promise[GameId]
-    connectionsActor ! CreateGame(gameIdPromise)
-    gameIdPromise.future
+  def createGame(): Future[Game] = {
+    val gamePromise = Promise[Game]
+    connectionsActor ! CreateGame(gamePromise)
+    gamePromise.future
   }
 
   def getGame(gameId: GameId): Future[Option[Game]] = {
@@ -47,8 +47,8 @@ class ConnectionsActor extends Actor {
   private var games = Map[GameId, Game]()
 
   def receive = {
-    case CreateGame(gameIdPromise) =>
-      onCreateGame(gameIdPromise)
+    case CreateGame(gamePromise) =>
+      onCreateGame(gamePromise)
     case GetGame(gameId, gamePromise) =>
       onGetGame(gameId, gamePromise)
     case GetAllGames(gamesPromise) =>
@@ -59,10 +59,10 @@ class ConnectionsActor extends Actor {
     gamesPromise.success(games.values.toSeq)
   }
 
-  def onCreateGame(gameIdPromise: Promise[GameId]) {
-    val gameId = freeGameId
-    games += (gameId -> Game(gameId))
-    gameIdPromise.success(gameId)
+  def onCreateGame(gamePromise: Promise[Game]) {
+    val game = Game(freeGameId, UUID.randomUUID())
+    games += (game.gameId -> game)
+    gamePromise.success(game)
   }
 
   def onGetGame(gameId: GameId, gamePromise: Promise[Option[Game]]) {

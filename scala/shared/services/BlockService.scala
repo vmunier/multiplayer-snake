@@ -10,7 +10,7 @@ object BlockService {
     Block(randomPos, Colors.nextColor.rgb)
   }
 
-  def findCollision(snakeBlock: Block, foods: Set[Block]): Option[Block] = {
-    foods.filter(food => food.pos == snakeBlock.pos).headOption
+  def findCollision(snakeBlock: Block, blocks: Iterable[Block]): Option[Block] = {
+    blocks.filter(block => block.pos == snakeBlock.pos).headOption
   }
 }

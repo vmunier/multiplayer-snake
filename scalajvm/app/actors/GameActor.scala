@@ -20,7 +20,12 @@ import shared.models.GameNotif
 import shared.models.Colors
 import shared.services.BlockService
 import shared.models.SnakeMove
+import shared.models.GameLoopNotif
+import shared.models.GameInitNotif
+import shared.models.SnakeWithId
 import shared.models.IdTypes._
+import play.api.libs.json.Json
+import models.GameNotifJsonImplicits._
 
 object GameActor {
   case class MoveSnake(snakeId: SnakeId, move: Move)
@@ -30,19 +35,13 @@ object GameActor {
   case object Start
 }
 
-trait GameVars extends mutable.GameFood {
-  var snakes = Map[SnakeId, Snake]()
-  var losingSnakes = Map[SnakeId, Snake]()
-  var nextGameNotif = GameNotif()
-}
-
 trait StartedGame {
   def started: Actor.Receive
+  def notifsChannel: Channel[JsValue]
 }
 
-trait GameConnections extends GameVars with GameConstants { actor: Actor with StartedGame  =>
+trait GameConnections extends mutable.GameMutations { actor: Actor with StartedGame =>
   import GameActor._
-
 
   override def receive: Actor.Receive = {
     case Start =>
@@ -59,9 +58,11 @@ trait GameConnections extends GameVars with GameConstants { actor: Actor with St
     Akka.system.scheduler.schedule(0.milliseconds, NewFoodInterval) {
       self ! DisposeNewFood
     }
+    val gameInitNotif = GameInitNotif(snakes.map { case (id, snake) => SnakeWithId(id, snake) }.toSeq)
+    notifsChannel.push(Json.toJson(gameInitNotif))
   }
 
-  def onJoin(snakeIdPromise: Promise[SnakeId]) = {
+  def onJoin(snakeIdPromise: Promise[SnakeId]) {
     val snakeId = new SnakeId(snakes.size)
     val availablePositions = blockPositions.diff(snakes.values.map(_.blocks).toSeq)
     val snakeHead = BlockService.randomNewBlock(availablePositions)
@@ -70,8 +71,10 @@ trait GameConnections extends GameVars with GameConstants { actor: Actor with St
   }
 }
 
-class GameActor(notifsChannel: Channel[GameNotif]) extends Actor with StartedGame with GameConnections {
+class GameActor(override val notifsChannel: Channel[JsValue]) extends Actor with StartedGame with GameConnections {
   import GameActor._
+
+  var nextGameNotif = GameLoopNotif()
 
   def started: Actor.Receive = {
     case DisposeNewFood =>
@@ -83,55 +86,24 @@ class GameActor(notifsChannel: Channel[GameNotif]) extends Actor with StartedGam
   }
 
   def onMoveSnake(snakeId: SnakeId, move: Move) {
-    println("in onMoveSnake")
     for {
       snake <- snakes.get(snakeId)
       if MoveService.isValidMove(snake, move)
     } {
-      println("update happens to move=" + move)
       nextGameNotif = nextGameNotif.withNewSnakeMove(SnakeMove(snakeId, move))
       snakes += snakeId -> snake.copy(move = move)
     }
   }
 
   def onGameTick() = {
-    println("in onGameTick!")
     if (foods.isEmpty) {
       addNewFood(availablePositions)
     }
 
-    for ((snakeId, snake) <- snakes) {
-      moveSnake(snakeId, snake)
-      handleCollisions(snakeId, snake)
-    }
+    super.moveSnakes()
 
-    notifsChannel.push(nextGameNotif)
-    nextGameNotif = GameNotif()
-  }
-
-  private def moveSnake(snakeId: SnakeId, snake: Snake) {
-    val movedSnake = SnakeService.moveSnake(snake, NbBlocksInWidth, NbBlocksInHeight)
-    snakes += snakeId -> movedSnake
-  }
-
-  private def handleCollisions(snakeId: SnakeId, snake: Snake) = {
-    if (snake.bitesItsQueue) {
-      // gameOver for snake
-      snakes -= snakeId
-      losingSnakes += snakeId -> snake
-    } else {
-      // digested food
-      for (eatenFood <- BlockService.findCollision(snake.head, foods)) {
-        startDigestionForFood(eatenFood)
-        snakes += snakeId -> snake.copy(nbEatenBlocks = snake.nbEatenBlocks + 1)
-      }
-
-      // food reaching queue
-      for (foodReachingEndQueue <- BlockService.findCollision(snake.blocks.last, foodsInDigestion)) {
-        snakes += snakeId -> snake.copy(tail = snake.tail ++ Seq(foodReachingEndQueue))
-        endDigestionForFood(foodReachingEndQueue)
-      }
-    }
+    notifsChannel.push(Json.toJson(nextGameNotif))
+    nextGameNotif = GameLoopNotif()
   }
 
   def onDisposeNewFood() = {

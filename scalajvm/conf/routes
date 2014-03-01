@@ -11,11 +11,15 @@ GET    /games                        controllers.Application.games
 
 POST   /games                        controllers.Application.createGame
 
-GET    /games/:uuid                  controllers.Application.game(uuid: java.util.UUID)
+GET    /games/:gameUUID              controllers.Application.game(gameUUID: java.util.UUID, maybeCreatorUUID: Option[java.util.UUID])
+
+GET    /games/:gameUUID/start        controllers.Application.startGame(gameUUID: java.util.UUID, creatorUUID: java.util.UUID)
+
+GET    /assets/javascripts/game.js   controllers.Application.gameJs(gameUUID: java.util.UUID, maybeCreatorUUID: Option[java.util.UUID])
 
 GET    /games/:uuid/ws               controllers.Application.joinGame(uuid: java.util.UUID)
 
-GET    /assets/javascripts/game.js   controllers.Application.gameJs(uuid: java.util.UUID)
+
 
 # Map static resources from the /public folder to the /assets URL path
 GET    /assets/*file                 controllers.Assets.at(path="/public", file)

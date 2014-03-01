@@ -11,15 +11,18 @@ import shared.models.Moves._
 import play.api.libs.iteratee.Concurrent
 import play.api.libs.iteratee.Enumerator
 import shared.models.IdTypes._
-import shared.models.GameNotif
+import shared.models.GameLoopNotif
+import shared.models.GameInitNotif
+import java.util.UUID
+import play.api.libs.json.JsValue
 
-case class Game(gameId: GameId) {
+case class Game(gameId: GameId, creatorUUID: UUID) {
   import GameActor._
 
-  private val (enumerator, channel) = Concurrent.broadcast[GameNotif]
+  private val (enumerator, channel) = Concurrent.broadcast[JsValue]
   private val gameActorRef = Akka.system.actorOf(Props(new GameActor(channel)))
 
-  val notifsEnumerator: Enumerator[GameNotif] = enumerator
+  val notifsEnumerator: Enumerator[JsValue] = enumerator
 
   def join(): Future[SnakeId] = {
     val snakeIdPromise = Promise[SnakeId]

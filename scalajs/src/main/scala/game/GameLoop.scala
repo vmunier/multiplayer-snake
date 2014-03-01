@@ -9,15 +9,13 @@ import shared.models._
 import shared.models.IdTypes.SnakeId
 import shared.models.Moves._
 
-case class GameLoop(update: (GameNotif) => Unit, render: () => Unit) {
-  val receiveGameNotif = (gameNotif: GameNotif) => {
-    println("notif  : " + gameNotif)
-    println("foods : " + gameNotif.snakes.toSeq.map(_.move))
-    update(gameNotif)
+case class GameLoop(onGameLoopNotif: (GameLoopNotif) => Unit, render: () => Unit) {
+  val receiveGameLoopNotif = (gameLoopNotif: GameLoopNotif) => {
+    onGameLoopNotif(gameLoopNotif)
     render()
   }
 
   def start() = {
-    g.window.game.receiveGameNotif = (x: JsGameNotif) => receiveGameNotif(GameNotifParser.parse(x))
+    g.window.game.receiveGameLoopNotif = (x: JsGameLoopNotif) => receiveGameLoopNotif(GameNotifParser.parseGameLoopNotif(x))
   }
 }

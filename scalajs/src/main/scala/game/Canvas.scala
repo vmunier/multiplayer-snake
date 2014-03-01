@@ -18,19 +18,20 @@ object Canvas {
   def init() = {
     canvas.width = Game.NbBlocksInWidth * Game.BlockSize
     canvas.height = Game.NbBlocksInHeight * Game.BlockSize
-    g.document.body.appendChild(canvas)
+
+    g.jQuery(".gameArea").empty().append(canvas)
     canvas
   }
 
-  def render(playerNbEatenBlocks: Int, nonEmptyBlocks: Seq[Block]) = {
+  def render(playerNbEatenBlocks: Int, nonEmptyBlocks: Seq[Block], gameOver: Boolean, gameLost: Boolean) = {
     // clear window
     ctx.clearRect(0, 0, canvas.width, canvas.height)
 
     renderBlocks(nonEmptyBlocks)
     displayScore(playerNbEatenBlocks)
 
-    if (Game.gameOver) {
-      displayGameOver()
+    if (gameOver) {
+      displayGameOver(gameLost)
     }
   }
 
@@ -42,11 +43,11 @@ object Canvas {
     ctx.fillText("Blocks eaten: " + nbEatenBlocks, 32, 32)
   }
 
-  private def displayGameOver() = {
-    val (color, text) = if (Game.win) {
-      ("green", "YOU WIN")
-    } else {
+  private def displayGameOver(gameLost: Boolean) = {
+    val (color, text) = if (gameLost) {
       ("red", "GAME OVER")
+    } else {
+      ("green", "YOU WIN")
     }
     ctx.fillStyle = color
     ctx.font = "60px Arial"
