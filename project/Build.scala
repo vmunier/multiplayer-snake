@@ -28,6 +28,7 @@ object ApplicationBuild extends Build with UniversalKeys {
     play.Project.playScalaSettings ++ Seq(
       name                 := "play-game",
       version              := "0.1.0-SNAPSHOT",
+      scalacOpts,
       scalajsOutputDir     := baseDirectory.value / "public" / "javascripts" / "scalajs",
       compile in Compile <<= (compile in Compile) dependsOn Def.task {
         copy((packageJS in (scalajs, Compile)).value, scalajsOutputDir.value)
@@ -56,6 +57,7 @@ object ApplicationBuild extends Build with UniversalKeys {
     scalaJSSettings ++ Seq(
       name := "scalajs-game",
       version := "0.1.0-SNAPSHOT",
+      scalacOpts,
       // Specify additional .js file to be passed to package-js and optimize-js
       unmanagedSources in (Compile, ScalaJSKeys.packageJS) += baseDirectory.value / "js" / "startup.js",
       sharedScalaSetting,
@@ -65,5 +67,6 @@ object ApplicationBuild extends Build with UniversalKeys {
       )
     )
 
+  lazy val scalacOpts = scalacOptions ++= Seq("-unchecked", "-deprecation", "-feature")
   lazy val sharedScalaSetting = unmanagedSourceDirectories in Compile += baseDirectory.value / ".." / "scala"
 }
