@@ -1,0 +1,20 @@
+@(title: String)(content: Html)
+
+<!DOCTYPE html>
+
+<html>
+    <head>
+        <title>@title</title>
+        <link rel="stylesheet" media="screen" href="@routes.Assets.at("stylesheets/main.css")">
+        <link rel="shortcut icon" type="image/png" href="@routes.Assets.at("images/favicon.png")">
+        <script src="@routes.Assets.at("javascripts/jquery-1.9.0.min.js")" type="text/javascript"></script>
+    </head>
+    <body>
+        @content
+        <script src="@routes.Assets.at("javascripts/scalajs/scalajs-game-extdeps.js")" type="text/javascript"></script>
+        <script src="@routes.Assets.at("javascripts/scalajs/scalajs-game-intdeps.js")" type="text/javascript"></script>
+        <script src="@routes.Assets.at("javascripts/scalajs/scalajs-game.js")" type="text/javascript"></script>
+        <!-- for production (play dist), use the optimized version instead by uncommenting the next line and removing the three lines above -->
+        <!-- <script src="@routes.Assets.at("javascripts/scalajs/scalajs-game-opt.js")" type="text/javascript"></script> -->
+    </body>
+</html>
