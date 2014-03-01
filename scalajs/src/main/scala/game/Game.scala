@@ -57,7 +57,6 @@ object Game extends GameVars {
       gameOver = true
       win = true
     } else {
-      println("moveDoneInLastSecond : ", moveDoneInLastSecond)
       if (!moveDoneInLastSecond) {
         updateMove()
       }
