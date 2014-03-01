@@ -5,17 +5,18 @@ import js.Dynamic.{ global => g }
 import org.scalajs.dom
 import org.scalajs.dom.extensions._
 import org.scalajs.dom.HTMLCanvasElement
-import shared.Snake
-import shared.Block
-import shared.Position
-import shared.Colors
-import shared.Moves._
-import shared.GameConstants
+import shared.models.Snake
+import shared.models.Block
+import shared.models.Position
+import shared.models.Colors
+import shared.models.Moves._
+import shared.models.GameConstants
+
 
 trait GameVars extends GameConstants {
 
   lazy val BlockSize = Math.min(
-  (Canvas.windowHeight / NbBlocksInHeigth).toInt,
+  (Canvas.windowHeight / NbBlocksInHeight).toInt,
   (Canvas.windowWidth / NbBlocksInWidth).toInt)
 
   val canvas = Canvas.init()
@@ -29,7 +30,10 @@ trait GameVars extends GameConstants {
 }
 
 object Game extends GameVars {
+  GameSocket.init()
+  /*
   Keyboard.init()
+
 
   def updateMove(): Unit = {
     val noTail = snake.tail.isEmpty
@@ -97,14 +101,13 @@ object Game extends GameVars {
   }
 
   def moveSnake() = {
-    val modif = BlockSize
-    snake = snake.copy(tail = snake.moveTailForward())
+    // snake = snake.copy(tail = snake.moveTailForward())
 
     val headPos = snake.head.pos
 
     val newHeadPos = Position(
       x = (NbBlocksInWidth + headPos.x + horizontal) % NbBlocksInWidth,
-      y = (NbBlocksInHeigth + headPos.y + vertical) % NbBlocksInHeigth)
+      y = (NbBlocksInHeight + headPos.y + vertical) % NbBlocksInHeight)
 
     snake = snake.copy(head = snake.head.copy(pos = newHeadPos))
   }
@@ -120,8 +123,8 @@ object Game extends GameVars {
     case Down => 1
     case _ => 0
   }
-
+*/
   def main(): Unit = {
-    new GameLoop().start(update, () => Canvas.render(snake, Food.foods.toSeq, Food.foodsInDigestion.toSeq))
+    //new GameLoop().start(update, () => Canvas.render(snake, Food.foods.toSeq, Food.foodsInDigestion.toSeq))
   }
 }

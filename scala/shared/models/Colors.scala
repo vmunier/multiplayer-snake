@@ -1,4 +1,4 @@
-package shared
+package shared.models
 
 case class Color(name: String, hex: String, rgb: String)
 

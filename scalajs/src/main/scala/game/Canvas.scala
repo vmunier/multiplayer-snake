@@ -4,8 +4,8 @@ import scala.scalajs.js
 import js.Dynamic.{ global => g }
 import org.scalajs.dom
 import org.scalajs.dom.extensions._
-import shared.Block
-import shared.Snake
+import shared.models.Block
+import shared.models.Snake
 
 object Canvas {
   lazy val canvas = dom.document.createElement("canvas").cast[dom.HTMLCanvasElement]
@@ -17,7 +17,7 @@ object Canvas {
 
   def init() = {
     canvas.width = Game.NbBlocksInWidth * Game.BlockSize
-    canvas.height = Game.NbBlocksInHeigth * Game.BlockSize
+    canvas.height = Game.NbBlocksInHeight * Game.BlockSize
     g.document.body.appendChild(canvas)
     canvas
   }

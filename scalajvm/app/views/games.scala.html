@@ -1,0 +1,14 @@
+@(gameIds: Seq[shared.models.IdTypes.GameId])
+
+@main(s"games list") {
+  <form action="@routes.Application.games" method="POST">
+    <input type="submit" value="Create Game" />
+  </form>
+      
+  <p>Join a game</p>
+  <ul>
+  @for(gameId <- gameIds) {
+    <li><a href="@routes.Application.game(gameId.id)">@{gameId.id}</a></li>
+  }  
+  </ul>
+}

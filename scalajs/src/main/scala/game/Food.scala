@@ -1,8 +1,8 @@
 package game
 
-import shared.Block
-import shared.Position
-import shared.Colors
+import shared.models.Block
+import shared.models.Position
+import shared.models.Colors
 
 object Food {
   var foods = Set[Block]()
