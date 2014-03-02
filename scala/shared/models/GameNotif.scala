@@ -24,3 +24,4 @@ case class GameLoopNotif(foods: Set[Block] = Set(), snakes: Set[SnakeMove] = Set
 case class GameInitNotif(snakes: Seq[Snake], override val notifType: String = "gameInit") extends GameNotif
 
 case class PlayerSnakeIdNotif(playerSnakeId: SnakeId, override val notifType: String = "playerSnakeId") extends GameNotif
+

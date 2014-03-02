@@ -1,4 +1,160 @@
+// ******************* IMPORTS *******************
 
-canvas {
-    border: 1px solid black;
+@import "_reset.less";
+@import "_mixins.less";
+@import "_grid.less";
+@import "_fonticon.less";
+
+
+@import url('http://fonts.googleapis.com/css?family=Quicksand:300,400,700');
+
+
+// ******************* VARIABLES ******************
+
+@purple:        #242638;
+@mint:          #4cfff0;
+
+@red:           #FC556D;
+@green:         #1EFFD7;
+@blue:          #549CFD;
+
+@white90:       rgba(255,255,255,0.9);
+@black10:       rgba(0,0,0,0.1);
+
+
+@quicksand:     'Quicksand', sans-serif;
+
+
+// ******************* GENERAL ******************
+
+body{
+    font: 400 14px @quicksand;
+    width: 100%;
+    background: @purple;
+    color: @white90;
+}
+
+.wrap{
+    width: @total-width;
+    margin: 0px auto;
+    text-align: center;
+}
+.wrap100{
+    width: 100%;
+}
+
+a {
+    color: white;
+    font: 200 18px/45px @quicksand;
+}
+
+header{
+    text-align: center;
+    .uppercase;
+    background: darken(@purple, 5%);
+    padding: 20px;
+    h1{
+        letter-spacing: 0.3em;
+        font: 300 40px/80px @quicksand;
+        margin-bottom: 20px;
+        span{
+            font-weight: 400;
+        }
+    }
+    h2{
+        .column(8);
+        .push(2);
+        .pull(2);
+        font: 400 20px/30px @quicksand;
+        color: @purple;
+        background: @mint;
+        letter-spacing: 0.3em;
+        word-spacing: 0.6em;
+        margin-bottom: 20px;
+    }
+    &.small{
+        h1{
+            font: 300 22px/40px @quicksand;
+            margin-bottom: 10px;
+            letter-spacing: 0.65em;
+        }
+        h2{
+            font: 400 22px/44px @quicksand;
+            .column(6);
+            .push(3);
+            .pull(3);
+            margin-bottom: 10px;
+        }
+        h3{
+            font: 300 18px/36px @quicksand;
+            .uppercase;
+            letter-spacing: 0.3em;
+        }
+    }
+}
+
+
+input[type="text"], textarea{
+    border: solid 1px @white90;
+    background: transparent;
+    color: white;
+    .transition(all 0.15s ease);
+    font-family: @quicksand;
+    &:focus{
+        background: @white90;
+        color: @purple;
+        border-color: white;
+        outline: none;
+    }
+}
+
+
+.btn{
+    .border-radius(2px);
+    background: @black10;
+    border: solid 1px @mint;
+    .uppercase;
+    color: @mint;
+    .transition(all 0.15s ease);
+    font: 400 20px @quicksand;
+    height: 60px;
+    letter-spacing: 0.3em;
+    &:hover, &:focus{
+        background: @mint;
+        color: @purple;
+        outline: none;
+    }
+}
+
+.createGame{
+    .column(6);
+    .push(3);
+    .pull(3);
+    margin-top: 70px;
+    margin-bottom: 20px;
+    h4, input, button{
+        display: block;
+        width: 100%;
+        margin-bottom: 50px;
+    }
+    h4{
+        text-align: center;
+        font: 300 20px/50px @quicksand;
+        vertical-align: top;
+        .uppercase;
+        border-bottom: solid 1px @white90;
+    }
+    input{
+        padding-top: 9px;
+        padding-bottom: 9px;
+        .uppercase;
+        font: 400 20px/40px @quicksand;
+        text-align: center;
+        letter-spacing: 0.3em;
+        &:focus{
+            background: @white90;
+            border-color: white;
+            outline: none;
+        }
+    }
 }

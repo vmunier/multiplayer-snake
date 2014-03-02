@@ -1,0 +1,61 @@
+// ******************* IMPORTS *******************
+
+@import "_reset.less";
+@import "_mixins.less";
+@import "_grid.less";
+@import "_fonticon.less";
+
+
+@import url('http://fonts.googleapis.com/css?family=Quicksand:300,400,700');
+
+
+// ******************* VARIABLES ******************
+
+@purple:        #242638;
+@mint:          #4cfff0;
+
+@red:           #FC556D;
+@green:         #1EFFD7;
+@blue:          #549CFD;
+
+@white90:       rgba(255,255,255,0.9);
+@black10:       rgba(0,0,0,0.1);
+
+
+@quicksand:     'Quicksand', sans-serif;
+
+
+// ******************* GENERAL ******************
+
+canvas {
+    border: 1px solid black;
+}
+
+.btn{
+    .border-radius(2px);
+    background: @purple;
+    border: solid 1px @mint;
+    .uppercase;
+    color: @mint;
+    .transition(all 0.15s ease);
+    font: 400 20px @quicksand;
+    height: 60px;
+    letter-spacing: 0.3em;
+    &:hover, &:focus{
+        background: @mint;
+        color: @purple;
+        outline: none;
+    }
+}
+
+.startGameBtn {
+    margin-top: 40px;
+}
+
+.waitStartGame {
+    margin-top: 40px;
+}
+
+.gameArea {
+    text-align: center;
+}

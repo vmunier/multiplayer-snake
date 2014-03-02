@@ -1,16 +1,28 @@
-@(gameUUID: java.util.UUID, maybeCreatorUUID: Option[java.util.UUID])
+@(gameUUID: java.util.UUID, gameName: String, maybeCreatorUUID: Option[java.util.UUID])
 
-@main(s"game $gameUUID") {
+<!DOCTYPE html>
 
-  <div class="gameArea">
-  @maybeCreatorUUID.map { _ =>
-    <button class="startGameBtn">Start Game</button>
-  }
-  </div>
-  <script src="@routes.Assets.at("javascripts/scalajs/scalajs-game-extdeps.js")" type="text/javascript"></script>
-  <script src="@routes.Assets.at("javascripts/scalajs/scalajs-game-intdeps.js")" type="text/javascript"></script>
-  <script src="@routes.Assets.at("javascripts/scalajs/scalajs-game.js")" type="text/javascript"></script>
-  <script type="text/javascript" charset="utf-8" src="@routes.Application.gameJs(gameUUID, maybeCreatorUUID)"></script>
-  <!-- for production (play dist), use the optimized version instead by uncommenting the next line and removing the three lines above -->
-  <!-- <script src="@routes.Assets.at("javascripts/scalajs/scalajs-game-opt.js")" type="text/javascript"></script> -->
-}
+<html>
+  <head>
+    <title>game @gameName</title>
+    <!-- use canvas.css instead of main.css -->
+    <link rel="stylesheet" media="screen" href="@routes.Assets.at("stylesheets/canvas.css")">
+    <link rel="shortcut icon" type="image/png" href="@routes.Assets.at("images/favicon.png")">
+    <script src="@routes.Assets.at("javascripts/jquery-1.9.0.min.js")" type="text/javascript"></script>
+  </head>
+  <body>
+    <div class="gameArea">
+      @if(maybeCreatorUUID.isDefined){
+        <button class="btn startGameBtn">Start Game</button>
+      } else {
+        <div class="waitStartGame">Wait the game to start...</div>
+      }
+    </div>
+    <script src="@routes.Assets.at("javascripts/scalajs/scalajs-game-extdeps.js")" type="text/javascript"></script>
+    <script src="@routes.Assets.at("javascripts/scalajs/scalajs-game-intdeps.js")" type="text/javascript"></script>
+    <script src="@routes.Assets.at("javascripts/scalajs/scalajs-game.js")" type="text/javascript"></script>
+    <script type="text/javascript" charset="utf-8" src="@routes.Application.gameJs(gameUUID, maybeCreatorUUID)"></script>
+    <!-- for production (play dist), use the optimized version instead by uncommenting the next line and removing the three lines above -->
+    <!-- <script src="@routes.Assets.at("javascripts/scalajs/scalajs-game-opt.js")" type="text/javascript"></script> -->
+  </body>
+</html>

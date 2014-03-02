@@ -1,14 +1,27 @@
-@(gameIds: Seq[shared.models.IdTypes.GameId])
+@(games: Seq[(shared.models.IdTypes.GameId, String)])
 
 @main(s"games list") {
-  <form action="@routes.Application.games" method="POST">
-    <input type="submit" value="Create Game" />
-  </form>
-      
-  <p>Join a game</p>
-  <ul>
-  @for(gameId <- gameIds) {
-    <li><a href="@routes.Application.game(gameId.id, None)">@{gameId.id}</a></li>
-  }  
-  </ul>
+<header>
+  <div class="wrap">
+    <h1>Multiplayer Snake Game</h1>
+    <br class="clearfix" />
+  </div>
+</header>
+<div class="wrap">
+  <div class="createGame">
+    <h4>You can create a game</h4>
+    <form action="@routes.Application.games" method="POST">
+      <input type="text" name="gameName" placeholder="Game name">
+      <input class="btn" type="submit" value="Create" />
+    </form>
+
+    <h4>Or Join an exisitng Game</h4>
+    <ul>
+      @for((gameId, gameName) <- games) {
+        <li><a href="@routes.Application.game(gameId.id, None)">@{gameName}</a></li>
+      }
+    </ul>
+
+  </div>
+</div>
 }

@@ -1,6 +1,5 @@
 package controllers
 
-
 import java.util.UUID
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
@@ -20,6 +19,8 @@ import play.api.mvc._
 import shared.models.Moves._
 import models.ClientNotif
 import shared.models.PlayerSnakeIdNotif
+import play.api.data._
+import play.api.data.Forms._
 
 object Application extends Controller {
 
@@ -38,14 +39,22 @@ object Application extends Controller {
 
   def games = Action.async {
     ConnectionsActor.getAllGames.map { games =>
-      Ok(views.html.games(games.map(_.gameId)))
+      Ok(views.html.games(games.map(game => (game.gameId, game.name))))
     }
   }
 
-  def createGame() = Action.async { request =>
-    ConnectionsActor.createGame.map { game=>
+  val createGameForm = Form(
+    single(
+      "gameName" -> nonEmptyText))
+
+  def createGame = Action.async { implicit request =>
+    def create(gameName: String): Future[SimpleResult] = ConnectionsActor.createGame(gameName).map { game =>
       Redirect(routes.Application.game(game.gameId.id, Some(game.creatorUUID)))
     }
+
+    createGameForm.bindFromRequest.fold(
+      errors => Future(BadRequest(errors.errorsAsJson)),
+      gameName => create(gameName))
   }
 
   def startGame(gameUUID: UUID, creatorUUID: UUID) = Action.async { request =>
@@ -61,7 +70,7 @@ object Application extends Controller {
 
   def game(uuid: UUID, maybeCreatorUUID: Option[UUID]) = Action.async { request =>
     withGame(uuid) { game =>
-      Ok(views.html.game(game.gameId.id, maybeCreatorUUID))
+      Ok(views.html.game(game.gameId.id, game.name, maybeCreatorUUID))
     }
   }
 
@@ -96,7 +105,6 @@ object Application extends Controller {
       }
     }
   }
-
 
   private def withGame(uuid: UUID)(action: Game => SimpleResult): Future[SimpleResult] = {
     ConnectionsActor.getGame(new GameId(uuid)).map { maybeGame =>

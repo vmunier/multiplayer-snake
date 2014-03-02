@@ -16,7 +16,7 @@ import shared.models.GameInitNotif
 import java.util.UUID
 import play.api.libs.json.JsValue
 
-case class Game(gameId: GameId, creatorUUID: UUID) {
+case class Game(gameId: GameId, creatorUUID: UUID, name: String) {
   import GameActor._
 
   private val (enumerator, channel) = Concurrent.broadcast[JsValue]
