@@ -62,7 +62,10 @@ object Application extends Controller {
       if (game.creatorUUID != creatorUUID) {
         Forbidden(s"$creatorUUID is not the right creator UUID for the game $gameUUID")
       } else {
-        game.start()
+        for(started <- game.start if started) {
+          ConnectionsActor.removeGame(game.gameId)
+        }
+
         Ok(s"Game $gameUUID started")
       }
     }

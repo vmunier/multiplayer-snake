@@ -31,7 +31,7 @@ object GameActor {
   case object DisposeNewFood
   case object GameTick
   case class Join(snakeIdPromise: Promise[SnakeId])
-  case object Start
+  case class Start(startedPromise: Promise[Boolean])
 }
 
 trait StartedGame {
@@ -43,14 +43,16 @@ trait GameConnections extends mutable.GameMutations { actor: Actor with StartedG
   import GameActor._
 
   override def receive: Actor.Receive = {
-    case Start =>
-      onStart()
+    case Start(startedPromise) =>
+      onStart(startedPromise)
     case Join(snakeIdPromise) =>
       onJoin(snakeIdPromise)
   }
 
-  def onStart() {
-    if (snakes.size >= 2) {
+  def onStart(startedPromise: Promise[Boolean]) {
+    if (snakes.size <= 1) {
+      startedPromise.success(false)
+    } else {
       context.become(started)
       Akka.system.scheduler.schedule(0.milliseconds, GameTickInterval) {
         self ! GameTick
@@ -60,6 +62,7 @@ trait GameConnections extends mutable.GameMutations { actor: Actor with StartedG
       }
       val gameInitNotif = GameInitNotif(snakes.values.toSeq)
       notifsChannel.push(Json.toJson(gameInitNotif))
+      startedPromise.success(true)
     }
   }
 

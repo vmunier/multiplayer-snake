@@ -30,8 +30,10 @@ case class Game(gameId: GameId, creatorUUID: UUID, name: String) {
     snakeIdPromise.future
   }
 
-  def start(): Unit = {
-    gameActorRef ! Start
+  def start(): Future[Boolean] = {
+    val startedPromise = Promise[Boolean]
+    gameActorRef ! Start(startedPromise)
+    startedPromise.future
   }
 
   def moveSnake(snakeId: SnakeId, move: Move): Unit = {

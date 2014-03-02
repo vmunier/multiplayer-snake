@@ -19,6 +19,7 @@ object ConnectionsActor {
   case class CreateGame(gameName: String, gamePromise: Promise[Game])
   case class GetGame(gameId: GameId, gamePromise: Promise[Option[Game]])
   case class GetAllGames(gamesPromise: Promise[Seq[Game]])
+  case class RemoveGame(gameId: GameId)
 
   val connectionsActor = Akka.system.actorOf(Props[ConnectionsActor])
 
@@ -39,6 +40,10 @@ object ConnectionsActor {
     connectionsActor ! GetAllGames(allGamesPromise)
     allGamesPromise.future
   }
+
+  def removeGame(gameId: GameId): Unit = {
+    connectionsActor ! RemoveGame(gameId)
+  }
 }
 
 class ConnectionsActor extends Actor {
@@ -53,6 +58,12 @@ class ConnectionsActor extends Actor {
       onGetGame(gameId, gamePromise)
     case GetAllGames(gamesPromise) =>
       onGetAllGames(gamesPromise)
+    case RemoveGame(gameId) =>
+      onRemoveGame(gameId)
+  }
+
+  def onRemoveGame(gameId: GameId) {
+    games -= gameId
   }
 
   def onGetAllGames(gamesPromise: Promise[Seq[Game]]) {
