@@ -34,7 +34,7 @@ trait GameVars extends mutable.GameMutations with GameConstants {
   g.window.game.receiveGameInitNotif = (notif: JsGameInitNotif) => {
     val canvas = Canvas.init()
     val gameInitNotif = GameNotifParser.parseGameInitNotif(notif)
-    snakes = gameInitNotif.snakes
+    snakes = gameInitNotif.snakes.map(s => s.snakeId -> s).toMap
   }
 
   g.window.game.receivePlayerSnakeId = (notif: JsPlayerSnakeIdNotif) => {
@@ -43,8 +43,6 @@ trait GameVars extends mutable.GameMutations with GameConstants {
 }
 
 object Game extends GameVars {
-  Keyboard.init()
-
   def onGameLoopNotif(gameLoopNotif: GameLoopNotif) = {
     updateMove(gameLoopNotif.snakes)
     updateFood(gameLoopNotif.foods)

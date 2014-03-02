@@ -13,7 +13,6 @@ import shared.models.GameInitNotif
 import shared.models.Snake
 import shared.models.IdTypes._
 import shared.models.Moves
-import shared.models.SnakeWithId
 import shared.models.PlayerSnakeIdNotif
 
 object GameNotifJsonImplicits {
@@ -43,7 +42,6 @@ object GameNotifJsonImplicits {
   implicit val gameLoopNotifFormat = Json.format[GameLoopNotif]
   implicit val snakeFormat = Json.format[Snake]
 
-  implicit val snakeWithIdFormat = Json.format[SnakeWithId]
   implicit val gameInitNotifFormat = Json.format[GameInitNotif]
 
   implicit val playerSnakeIdNotif = Json.format[PlayerSnakeIdNotif]

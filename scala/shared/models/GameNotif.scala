@@ -21,10 +21,6 @@ case class GameLoopNotif(foods: Set[Block] = Set(), snakes: Set[SnakeMove] = Set
   }
 }
 
-case class SnakeWithId(snakeId: SnakeId, snake: Snake)
-case class GameInitNotif(snakesWithId: Seq[SnakeWithId], override val notifType: String = "gameInit") extends GameNotif {
-
-  val snakes: Map[SnakeId, Snake] = snakesWithId.flatMap(SnakeWithId.unapply).toMap
-}
+case class GameInitNotif(snakes: Seq[Snake], override val notifType: String = "gameInit") extends GameNotif
 
 case class PlayerSnakeIdNotif(playerSnakeId: SnakeId, override val notifType: String = "playerSnakeId") extends GameNotif

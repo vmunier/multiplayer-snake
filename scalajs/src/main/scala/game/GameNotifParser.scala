@@ -9,7 +9,6 @@ import shared.models.SnakeMove
 import shared.models.IdTypes.SnakeId
 import shared.models.GameLoopNotif
 import shared.models.GameInitNotif
-import shared.models.SnakeWithId
 import shared.models.Snake
 
 object GameNotifParser {
@@ -32,14 +31,13 @@ object GameNotifParser {
 
   def parseGameInitNotif(jsInitNotif: JsGameInitNotif): GameInitNotif = {
     val snakes = for {
-      jsSnakeWithId <- jsInitNotif.snakesWithId.toSeq
-      jsSnake = jsSnakeWithId.snake
+      jsSnake <- jsInitNotif.snakes.toSeq
       move <- Moves.fromName.lift(jsSnake.move)
     } yield {
       val head = parseBlock(jsSnake.head)
       val tail = jsSnake.tail.toList.map(parseBlock(_))
-      val snakeId = new SnakeId(jsSnakeWithId.snakeId)
-      SnakeWithId(snakeId, Snake(head, tail, jsSnake.nbEatenBlocks, move))
+      val snakeId = new SnakeId(jsSnake.snakeId)
+      Snake(snakeId, head, tail, jsSnake.nbEatenBlocks, move)
     }
 
     GameInitNotif(snakes)
@@ -72,20 +70,16 @@ trait JsGameLoopNotif extends js.Object {
 }
 
 trait JsSnake extends js.Object {
+  def snakeId: Int
   def head: JsBlock
   def tail: js.Array[JsBlock]
   def nbEatenBlocks: Int
   def move: String
 }
 
-trait JsSnakeWithId extends js.Object {
-  def snakeId: Int
-  def snake: JsSnake
-}
-
 trait JsGameInitNotif extends js.Object {
   def notifType: String
-  def snakesWithId: js.Array[JsSnakeWithId]
+  def snakes: js.Array[JsSnake]
 }
 
 trait JsPlayerSnakeIdNotif extends js.Object {

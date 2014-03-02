@@ -30,7 +30,7 @@ object Canvas {
     renderBlocks(nonEmptyBlocks)
     displayScore(playerNbEatenBlocks)
 
-    if (gameOver) {
+    if (gameOver || gameLost) {
       displayGameOver(gameLost)
     }
   }
@@ -45,7 +45,7 @@ object Canvas {
 
   private def displayGameOver(gameLost: Boolean) = {
     val (color, text) = if (gameLost) {
-      ("red", "GAME OVER")
+      ("red", "DEFEAT")
     } else {
       ("green", "YOU WIN")
     }

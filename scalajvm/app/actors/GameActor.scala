@@ -22,7 +22,6 @@ import shared.services.BlockService
 import shared.models.SnakeMove
 import shared.models.GameLoopNotif
 import shared.models.GameInitNotif
-import shared.models.SnakeWithId
 import shared.models.IdTypes._
 import play.api.libs.json.Json
 import models.GameNotifJsonImplicits._
@@ -58,7 +57,7 @@ trait GameConnections extends mutable.GameMutations { actor: Actor with StartedG
     Akka.system.scheduler.schedule(0.milliseconds, NewFoodInterval) {
       self ! DisposeNewFood
     }
-    val gameInitNotif = GameInitNotif(snakes.map { case (id, snake) => SnakeWithId(id, snake) }.toSeq)
+    val gameInitNotif = GameInitNotif(snakes.values.toSeq)
     notifsChannel.push(Json.toJson(gameInitNotif))
   }
 
@@ -66,7 +65,7 @@ trait GameConnections extends mutable.GameMutations { actor: Actor with StartedG
     val snakeId = new SnakeId(snakes.size)
     val availablePositions = blockPositions.diff(snakes.values.map(_.blocks).toSeq)
     val snakeHead = BlockService.randomNewBlock(availablePositions)
-    snakes += snakeId -> Snake(snakeHead)
+    snakes += snakeId -> Snake(snakeId, snakeHead)
     snakeIdPromise.success(snakeId)
   }
 }
@@ -91,17 +90,21 @@ class GameActor(override val notifsChannel: Channel[JsValue]) extends Actor with
       if MoveService.isValidMove(snake, move)
     } {
       nextGameNotif = nextGameNotif.withNewSnakeMove(SnakeMove(snakeId, move))
-      snakes += snakeId -> snake.copy(move = move)
     }
   }
 
   def onGameTick() = {
+    for {
+      SnakeMove(snakeId, move) <- nextGameNotif.snakes
+      snake <- snakes.get(snakeId)
+    } {
+      snakes += snakeId -> snake.copy(move = move)
+    }
+    super.moveSnakes()
+
     if (foods.isEmpty) {
       addNewFood(availablePositions)
     }
-
-    super.moveSnakes()
-
     notifsChannel.push(Json.toJson(nextGameNotif))
     nextGameNotif = GameLoopNotif()
   }

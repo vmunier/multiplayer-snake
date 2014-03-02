@@ -4,14 +4,14 @@ import shared.models.Snake
 import shared.models.Position
 import shared.models.Block
 
-object SnakeService {
-  def moveSnake(snake: Snake, nbBlocksInWidth: Int, nbBlocksInHeight: Int): Snake = {
+case class SnakeService(nbBlocksInWidth: Int, nbBlocksInHeight: Int) {
+  def moveSnake(snake: Snake): Snake = {
     val movedTail = moveTailForward(snake)
-    val movedHead = moveHead(snake, nbBlocksInWidth, nbBlocksInHeight)
+    val movedHead = moveHead(snake)
     snake.copy(head = movedHead, tail = movedTail)
   }
 
-  private def moveHead(snake: Snake, nbBlocksInWidth: Int, nbBlocksInHeight: Int): Block = {
+  private def moveHead(snake: Snake): Block = {
     val headPos = snake.head.pos
     val newHeadPos = Position(
       x = (nbBlocksInWidth + headPos.x + MoveService.horizontalCoef(snake.move)) % nbBlocksInWidth,
