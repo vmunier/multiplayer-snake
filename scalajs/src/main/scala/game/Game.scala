@@ -54,7 +54,8 @@ object Game extends GameVars {
     val playerNbEatenBlocks = (snakes ++ losingSnakes).get(playerSnakeId).map(_.nbEatenBlocks).getOrElse(0)
     val blocks = (snakes.values.flatMap(_.blocks) ++ foods ++ foodsInDigestion).toSeq
     val gameLost = losingSnakes.contains(playerSnakeId)
-    Canvas.render(playerNbEatenBlocks, blocks, gameOver, gameLost)
+    val maybeSnakeHead = snakes.get(playerSnakeId).map(_.head)
+    Canvas.render(playerNbEatenBlocks, maybeSnakeHead, blocks, gameOver, gameLost)
   }
 
   private def updateMove(snakeMoves: Set[SnakeMove]): Unit = {

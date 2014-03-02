@@ -23,12 +23,16 @@ object Canvas {
     canvas
   }
 
-  def render(playerNbEatenBlocks: Int, nonEmptyBlocks: Seq[Block], gameOver: Boolean, gameLost: Boolean) = {
+  def render(playerNbEatenBlocks: Int, maybeSnakeHead: Option[Block], nonEmptyBlocks: Seq[Block], gameOver: Boolean, gameLost: Boolean) = {
     // clear window
     ctx.clearRect(0, 0, canvas.width, canvas.height)
 
     renderBlocks(nonEmptyBlocks)
     displayScore(playerNbEatenBlocks)
+
+    for (block <- maybeSnakeHead) {
+      renderSnakeHead(block)
+    }
 
     if (gameOver || gameLost) {
       displayGameOver(gameLost)
@@ -56,11 +60,22 @@ object Canvas {
     ctx.fillText(text, canvas.width / 2, canvas.height / 2)
   }
 
+  private def renderSnakeHead(block: Block) = {
+    ctx.strokeStyle = "black"
+    ctx.lineWidth = 2
+    ctx.strokeRect(block.pos.x * Game.BlockSize, block.pos.y * Game.BlockSize, Game.BlockSize, Game.BlockSize)
+  }
+
   private def renderBlocks(blocks: Seq[Block]) = {
     for (block <- blocks) {
-      ctx.fillStyle = block.style
-      ctx.fillRect(block.pos.x * Game.BlockSize, block.pos.y * Game.BlockSize, Game.BlockSize, Game.BlockSize)
+      renderBlock(block.pos.x * Game.BlockSize, block.pos.y * Game.BlockSize, Game.BlockSize, Game.BlockSize, block.style)
     }
   }
+
+  private def renderBlock(x: Int, y: Int, width: Int, height: Int, style: String) = {
+    ctx.fillStyle = style
+    ctx.fillRect(x, y, width, height)
+  }
+
 
 }
