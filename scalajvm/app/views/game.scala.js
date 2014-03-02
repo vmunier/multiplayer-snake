@@ -14,7 +14,10 @@
 
   @maybeCreatorUUID.map { creatorUUID =>
     $(".startGameBtn").click(function(){
-      $.ajax({url:"@routes.Application.startGame(gameUUID, creatorUUID)"}); 
+      $.ajax({url:"@routes.Application.startGame(gameUUID, creatorUUID)"});
+      setTimeout(function() {
+        $('.startGameMsg').show();
+      }, 500);
     });
   }
   var receiveEvent = function(event) {
@@ -24,7 +27,7 @@
     } else if (data.notifType == "gameInit") {
       window.game.receiveGameInitNotif(data);
     } else if (data.notifType == "playerSnakeId") {
-      window.game.receivePlayerSnakeId(data);	
+      window.game.receivePlayerSnakeId(data);
     } else {
       window.game.receiveGameLoopNotif(data);
     }

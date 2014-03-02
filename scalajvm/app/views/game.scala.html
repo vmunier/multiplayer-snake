@@ -14,6 +14,7 @@
     <div class="gameArea">
       @if(maybeCreatorUUID.isDefined){
         <button class="btn startGameBtn">Start Game</button>
+        <div class="startGameMsg" style="display: none;">The game cannot be started with only one player. Wait another player to join and retry.</div>
       } else {
         <div class="waitStartGame">Wait the game to start...</div>
       }
