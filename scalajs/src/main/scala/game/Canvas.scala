@@ -47,7 +47,7 @@ object Canvas {
     val (color, text) = if (gameLost) {
       ("red", "DEFEAT")
     } else {
-      ("green", "YOU WIN")
+      ("green", "VICTORY")
     }
     ctx.fillStyle = color
     ctx.font = "60px Arial"

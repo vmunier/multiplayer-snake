@@ -50,15 +50,17 @@ trait GameConnections extends mutable.GameMutations { actor: Actor with StartedG
   }
 
   def onStart() {
-    context.become(started)
-    Akka.system.scheduler.schedule(0.milliseconds, GameTickInterval) {
-      self ! GameTick
+    if (snakes.size >= 2) {
+      context.become(started)
+      Akka.system.scheduler.schedule(0.milliseconds, GameTickInterval) {
+        self ! GameTick
+      }
+      Akka.system.scheduler.schedule(0.milliseconds, NewFoodInterval) {
+        self ! DisposeNewFood
+      }
+      val gameInitNotif = GameInitNotif(snakes.values.toSeq)
+      notifsChannel.push(Json.toJson(gameInitNotif))
     }
-    Akka.system.scheduler.schedule(0.milliseconds, NewFoodInterval) {
-      self ! DisposeNewFood
-    }
-    val gameInitNotif = GameInitNotif(snakes.values.toSeq)
-    notifsChannel.push(Json.toJson(gameInitNotif))
   }
 
   def onJoin(snakeIdPromise: Promise[SnakeId]) {
