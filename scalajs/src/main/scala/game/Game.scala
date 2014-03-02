@@ -51,7 +51,7 @@ object Game extends GameVars {
   }
 
   def render() = {
-    val playerNbEatenBlocks = snakes.get(playerSnakeId).map(_.nbEatenBlocks).getOrElse(0)
+    val playerNbEatenBlocks = (snakes ++ losingSnakes).get(playerSnakeId).map(_.nbEatenBlocks).getOrElse(0)
     val blocks = (snakes.values.flatMap(_.blocks) ++ foods ++ foodsInDigestion).toSeq
     val gameLost = losingSnakes.contains(playerSnakeId)
     Canvas.render(playerNbEatenBlocks, blocks, gameOver, gameLost)
