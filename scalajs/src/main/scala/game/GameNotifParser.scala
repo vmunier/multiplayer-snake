@@ -86,3 +86,8 @@ trait JsPlayerSnakeIdNotif extends js.Object {
   def notifType: String
   def playerSnakeId: Int
 }
+
+trait JsDisconnectedSnakeNotif extends js.Object {
+  def notifType: String
+  def disconnectedSnakeId: Int
+}

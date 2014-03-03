@@ -25,3 +25,4 @@ case class GameInitNotif(snakes: Seq[Snake], override val notifType: String = "g
 
 case class PlayerSnakeIdNotif(playerSnakeId: SnakeId, override val notifType: String = "playerSnakeId") extends GameNotif
 
+case class DisconnectedSnakeNotif(disconnectedSnakeId: SnakeId, override val notifType: String = "disconnectedSnake") extends GameNotif

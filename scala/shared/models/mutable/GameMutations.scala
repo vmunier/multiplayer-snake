@@ -40,8 +40,8 @@ trait GameMutations extends GameFood with GameConstants {
       if sameHeadPos(snakeService.moveSnake(fstSnake), scdSnake) &&
         sameHeadPos(snakeService.moveSnake(scdSnake), fstSnake)
     } {
-      killSnake(fstSnake)
-      killSnake(scdSnake)
+      killSnake(fstSnake.snakeId)
+      killSnake(scdSnake.snakeId)
     }
   }
 
@@ -72,9 +72,11 @@ trait GameMutations extends GameFood with GameConstants {
     }
   }
 
-  private def killSnake(snake: Snake) = {
-    snakes -= snake.snakeId
-    losingSnakes += snake.snakeId-> snake
+  def killSnake(snakeId: SnakeId) = {
+    for (snake <- snakes.get(snakeId)) {
+      snakes -= snake.snakeId
+      losingSnakes += snake.snakeId -> snake
+    }
   }
 
   private def handleCollisions() = {
@@ -84,14 +86,14 @@ trait GameMutations extends GameFood with GameConstants {
       if crossedHeadSnakes.size > 2
       snake <- crossedHeadSnakes
     } {
-      killSnake(snake)
+      killSnake(snake.snakeId)
     }
 
     // hitting a snake's tail
     for ((snakeId, snake) <- snakes) {
       val tailBlocks = snakes.values.flatMap(_.tail)
       if (BlockService.findCollision(snake.head, tailBlocks).isDefined) {
-        killSnake(snake)
+        killSnake(snake.snakeId)
       }
     }
   }

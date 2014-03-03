@@ -21,6 +21,7 @@ import models.ClientNotif
 import shared.models.PlayerSnakeIdNotif
 import play.api.data._
 import play.api.data.Forms._
+import play.api.libs.iteratee.Enumeratee
 
 object Application extends Controller {
 
@@ -85,8 +86,12 @@ object Application extends Controller {
             game.moveSnake(snakeId, clientNotif.move)
           }
         }
+        def onDone(): Unit = {
+          game.disconnectSnake(snakeId)
+        }
+
         val playerSnakeIdEnum = Enumerator(Json.toJson(PlayerSnakeIdNotif(snakeId)))
-        (iteratee, playerSnakeIdEnum.andThen(game.notifsEnumerator))
+        (iteratee, playerSnakeIdEnum.andThen(game.notifsEnumerator).through(Enumeratee.onIterateeDone(onDone)))
       }
     }
   }

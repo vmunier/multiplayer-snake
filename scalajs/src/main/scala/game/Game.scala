@@ -78,6 +78,10 @@ object Game extends GameVars {
     g.window.game.receivePlayerSnakeId = (notif: JsPlayerSnakeIdNotif) => {
       playerSnakeId = new SnakeId(notif.playerSnakeId)
     }
+
+    g.window.game.receiveDisconnectedSnake = (notif: JsDisconnectedSnakeNotif) => {
+      killSnake(new SnakeId(notif.disconnectedSnakeId))
+    }
   }
   initJsInterfaces()
 

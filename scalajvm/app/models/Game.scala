@@ -24,6 +24,10 @@ case class Game(gameId: GameId, creatorUUID: UUID, name: String) {
 
   val notifsEnumerator: Enumerator[JsValue] = enumerator
 
+  def disconnectSnake(snakeId: SnakeId): Unit = {
+    gameActorRef ! DisconnectSnake(snakeId)
+  }
+
   def join(): Future[SnakeId] = {
     val snakeIdPromise = Promise[SnakeId]
     gameActorRef ! Join(snakeIdPromise)

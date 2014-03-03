@@ -1,6 +1,5 @@
 package models
 
-
 import shared.models.Block
 import shared.models.IdTypes.SnakeId
 import shared.models.Moves._
@@ -10,6 +9,7 @@ import shared.models.SnakeMove
 import shared.models.GameNotif
 import shared.models.GameLoopNotif
 import shared.models.GameInitNotif
+import shared.models.DisconnectedSnakeNotif
 import shared.models.Snake
 import shared.models.IdTypes._
 import shared.models.Moves
@@ -45,6 +45,7 @@ object GameNotifJsonImplicits {
   implicit val gameInitNotifFormat = Json.format[GameInitNotif]
 
   implicit val playerSnakeIdNotif = Json.format[PlayerSnakeIdNotif]
+  implicit val disconnectedSnakeNotif = Json.format[DisconnectedSnakeNotif]
 
   implicit val clientFormat = Json.format[ClientNotif]
 }

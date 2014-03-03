@@ -13,7 +13,8 @@ import shared.models.IdTypes.GameId
 import shared.models.IdTypes.SnakeId
 import play.api.Play.current
 import play.api.libs.concurrent.Akka
-
+import scala.concurrent.duration._
+import scala.concurrent.ExecutionContext.Implicits.global
 
 object ConnectionsActor {
   case class CreateGame(gameName: String, gamePromise: Promise[Game])
@@ -24,8 +25,12 @@ object ConnectionsActor {
   val connectionsActor = Akka.system.actorOf(Props[ConnectionsActor])
 
   def createGame(gameName: String): Future[Game] = {
+
     val gamePromise = Promise[Game]
     connectionsActor ! CreateGame(gameName, gamePromise)
+    gamePromise.future.map { game =>
+      Akka.system.scheduler.scheduleOnce(10.minutes)(removeGame(game.gameId))
+    }
     gamePromise.future
   }
 
