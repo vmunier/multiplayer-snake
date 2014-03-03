@@ -15,7 +15,7 @@
       <input class="btn" type="submit" value="Create" />
     </form>
 
-    <h4>Or Join an exisitng Game</h4>
+    <h4>Or Join an existing Game</h4>
     <ul>
       @for((gameId, gameName) <- games) {
         <li><a href="@routes.Application.game(gameId.id, None)">@{gameName}</a></li>
