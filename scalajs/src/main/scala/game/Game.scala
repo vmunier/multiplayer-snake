@@ -27,19 +27,6 @@ trait GameVars extends mutable.GameMutations with GameConstants {
     (Canvas.windowWidth / NbBlocksInWidth).toInt)
 
   var playerSnakeId: SnakeId = new SnakeId(0)
-
-  g.window.game = new js.Object
-
-  // il faut gameInitNotif contienne aussi le snakeId pour chacun des snakes
-  g.window.game.receiveGameInitNotif = (notif: JsGameInitNotif) => {
-    val canvas = Canvas.init()
-    val gameInitNotif = GameNotifParser.parseGameInitNotif(notif)
-    snakes = gameInitNotif.snakes.map(s => s.snakeId -> s).toMap
-  }
-
-  g.window.game.receivePlayerSnakeId = (notif: JsPlayerSnakeIdNotif) => {
-    playerSnakeId = new SnakeId(notif.playerSnakeId)
-  }
 }
 
 object Game extends GameVars {
@@ -73,7 +60,28 @@ object Game extends GameVars {
     }
   }
 
+  private val renderLoop: () => Unit = () => {
+    g.window.requestAnimationFrame(renderLoop)
+    render()
+  }
+
+  def initJsInterfaces() = {
+    g.window.game = new js.Object
+    g.window.game.receiveGameInitNotif = (notif: JsGameInitNotif) => {
+      val canvas = Canvas.init()
+      val gameInitNotif = GameNotifParser.parseGameInitNotif(notif)
+      snakes = gameInitNotif.snakes.map(s => s.snakeId -> s).toMap
+    }
+
+    g.window.game.receiveGameLoopNotif = (x: JsGameLoopNotif) => onGameLoopNotif(GameNotifParser.parseGameLoopNotif(x))
+
+    g.window.game.receivePlayerSnakeId = (notif: JsPlayerSnakeIdNotif) => {
+      playerSnakeId = new SnakeId(notif.playerSnakeId)
+    }
+  }
+  initJsInterfaces()
+
   def main(): Unit = {
-    GameLoop(onGameLoopNotif, render).start()
+    renderLoop()
   }
 }
