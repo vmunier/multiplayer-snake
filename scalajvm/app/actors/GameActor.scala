@@ -27,14 +27,17 @@ import shared.models.IdTypes._
 import play.api.libs.json.Json
 import models.GameNotifJsonImplicits._
 import akka.actor.Cancellable
+import shared.models.Heartbeat
 
 object GameActor {
   case class MoveSnake(snakeId: SnakeId, move: Move)
   case class DisconnectSnake(snakeId: SnakeId)
   case object DisposeNewFood
   case object GameTick
+  case object ConnectionsHeartbeat
   case class Join(snakeIdPromise: Promise[SnakeId])
   case class Start(startedPromise: Promise[Boolean])
+  case object Stop
 }
 
 trait StartedGame {
@@ -45,9 +48,15 @@ trait StartedGame {
 trait GameConnections extends mutable.GameMutations { actor: Actor with StartedGame =>
   import GameActor._
 
+  val heartbeatScheduler = Akka.system.scheduler.schedule(0.milliseconds, HeartbeatInterval) {
+    notifsChannel.push(Json.toJson(Heartbeat()))
+  }
+
   override def receive: Actor.Receive = {
     case Start(startedPromise) =>
       onStart(startedPromise)
+    case Stop =>
+      onStop()
     case Join(snakeIdPromise) =>
       onJoin(snakeIdPromise)
     case DisconnectSnake(snakeId) =>
@@ -62,6 +71,7 @@ trait GameConnections extends mutable.GameMutations { actor: Actor with StartedG
       startedPromise.success(false)
     } else {
       context.become(started)
+      heartbeatScheduler.cancel()
       gameTickScheduler.success {
         Akka.system.scheduler.schedule(0.milliseconds, GameTickInterval) {
           self ! GameTick
@@ -77,6 +87,11 @@ trait GameConnections extends mutable.GameMutations { actor: Actor with StartedG
       notifsChannel.push(Json.toJson(gameInitNotif))
       startedPromise.success(true)
     }
+  }
+
+  def onStop() {
+    heartbeatScheduler.cancel()
+    notifsChannel.eofAndEnd()
   }
 
   var nextSnakeId = 0

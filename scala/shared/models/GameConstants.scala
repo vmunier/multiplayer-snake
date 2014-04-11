@@ -12,6 +12,7 @@ trait GameConstants {
   // real GameTickInterval
   val GameTickInterval: FiniteDuration = 100.milliseconds
   val NewFoodInterval: FiniteDuration = 3.seconds
+  val HeartbeatInterval: FiniteDuration = 1.seconds
 
   val blockPositions =
     for {

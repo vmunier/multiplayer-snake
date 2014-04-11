@@ -63,7 +63,7 @@ object Application extends Controller {
       if (game.creatorUUID != creatorUUID) {
         Forbidden(s"$creatorUUID is not the right creator UUID for the game $gameUUID")
       } else {
-        for(started <- game.start if started) {
+        for (started <- game.start if started) {
           ConnectionsActor.removeGame(game.gameId)
         }
 
@@ -78,7 +78,7 @@ object Application extends Controller {
     }
   }
 
-  def joinGame(uuid: UUID) = WebSocket.async[JsValue] { request =>
+  def joinGame(uuid: UUID, maybeCreatorUUID: Option[UUID]) = WebSocket.async[JsValue] { request =>
     withGameWS(uuid) { game =>
       game.join.map { snakeId =>
         val iteratee = Iteratee.foreach[JsValue] { event =>
@@ -88,6 +88,10 @@ object Application extends Controller {
         }
         def onDone(): Unit = {
           game.disconnectSnake(snakeId)
+          maybeCreatorUUID.foreach { _ =>
+            ConnectionsActor.removeGame(game.gameId)
+            game.stopIfNotStarted()
+          }
         }
 
         val playerSnakeIdEnum = Enumerator(Json.toJson(PlayerSnakeIdNotif(snakeId)))

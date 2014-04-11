@@ -6,7 +6,7 @@
 // - window.game.receivePlayerSnakeId(integer)
 (function() {
   var WS = window['MozWebSocket'] ? MozWebSocket : WebSocket;
-  var gameSocket = new WS("@routes.Application.joinGame(gameUUID).webSocketURL()");
+  var gameSocket = new WS("@routes.Application.joinGame(gameUUID, maybeCreatorUUID).webSocketURL()");
 
   var sendMove = function(move) {
     gameSocket.send(JSON.stringify({move: move}));

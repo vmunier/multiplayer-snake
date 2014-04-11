@@ -40,6 +40,10 @@ case class Game(gameId: GameId, creatorUUID: UUID, name: String) {
     startedPromise.future
   }
 
+  def stopIfNotStarted(): Unit = {
+    gameActorRef ! Stop
+  }
+
   def moveSnake(snakeId: SnakeId, move: Move): Unit = {
     gameActorRef ! MoveSnake(snakeId, move)
   }

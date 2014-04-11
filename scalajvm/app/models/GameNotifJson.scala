@@ -14,6 +14,7 @@ import shared.models.Snake
 import shared.models.IdTypes._
 import shared.models.Moves
 import shared.models.PlayerSnakeIdNotif
+import shared.models.Heartbeat
 
 object GameNotifJsonImplicits {
 
@@ -48,4 +49,5 @@ object GameNotifJsonImplicits {
   implicit val disconnectedSnakeNotif = Json.format[DisconnectedSnakeNotif]
 
   implicit val clientFormat = Json.format[ClientNotif]
+  implicit val heartbeatFormat = Json.format[Heartbeat]
 }

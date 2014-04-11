@@ -17,7 +17,7 @@ GET    /games/:gameUUID/start        controllers.Application.startGame(gameUUID:
 
 GET    /assets/javascripts/game.js   controllers.Application.gameJs(gameUUID: java.util.UUID, maybeCreatorUUID: Option[java.util.UUID])
 
-GET    /games/:uuid/ws               controllers.Application.joinGame(uuid: java.util.UUID)
+GET    /games/:uuid/ws               controllers.Application.joinGame(uuid: java.util.UUID, maybeCreatorUUID: Option[java.util.UUID])
 
 
 
