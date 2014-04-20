@@ -1,6 +1,7 @@
 package game
 
 import scala.scalajs.js
+import js.annotation.JSExport
 import js.Dynamic.{ global => g }
 import org.scalajs.dom
 import org.scalajs.dom.extensions._
@@ -29,6 +30,7 @@ trait GameVars extends mutable.GameMutations with GameConstants {
   var playerSnakeId: SnakeId = new SnakeId(0)
 }
 
+@JSExport
 object Game extends GameVars {
   def onGameLoopNotif(gameLoopNotif: GameLoopNotif) = {
     updateMove(gameLoopNotif.snakes)
@@ -71,6 +73,7 @@ object Game extends GameVars {
       val canvas = Canvas.init()
       val gameInitNotif = GameNotifParser.parseGameInitNotif(notif)
       snakes = gameInitNotif.snakes.map(s => s.snakeId -> s).toMap
+      renderLoop()
     }
 
     g.window.game.receiveGameLoopNotif = (x: JsGameLoopNotif) => onGameLoopNotif(GameNotifParser.parseGameLoopNotif(x))
@@ -85,7 +88,7 @@ object Game extends GameVars {
   }
   initJsInterfaces()
 
+  @JSExport
   def main(): Unit = {
-    renderLoop()
   }
 }

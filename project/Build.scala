@@ -4,42 +4,45 @@ import play.Keys._
 import scala.scalajs.sbtplugin.ScalaJSPlugin._
 import ScalaJSKeys._
 import com.typesafe.sbt.packager.universal.UniversalKeys
+import com.typesafe.sbteclipse.core.EclipsePlugin.EclipseKeys
 
 object ApplicationBuild extends Build with UniversalKeys {
 
   val scalajsOutputDir = Def.settingKey[File]("directory for javascript files output by scalajs")
 
-  lazy val root = Project(
-    id   = "root",
-    base = file(".")
-  ) aggregate (scalajvm, scalajs)
+  override def rootProject = Some(scalajvm)
+
+  val sharedSrcDir = "scala"
 
   lazy val scalajvm = play.Project(
     name = "scalajvm",
     path = file("scalajvm")
-  ) settings (scalajvmSettings: _*)
+  ) settings (scalajvmSettings: _*) aggregate (scalajs)
 
   lazy val scalajs = Project(
     id   = "scalajs",
     base = file("scalajs")
   ) settings (scalajsSettings: _*)
 
+  lazy val sharedScala = Project(
+    id = "sharedScala",
+    base = file(sharedSrcDir)
+  ) settings(sharedScalaSettings: _*)
+
   lazy val scalajvmSettings =
     play.Project.playScalaSettings ++ Seq(
       name                 := "play-game",
       version              := "0.1.0-SNAPSHOT",
-      scalacOpts,
-      scalajsOutputDir     := baseDirectory.value / "public" / "javascripts" / "scalajs",
-      compile in Compile <<= (compile in Compile) dependsOn (packageJS in (scalajs, Compile)),
+      scalajsOutputDir     := (crossTarget in Compile).value / "classes" / "public" / "javascripts",
+      compile in Compile <<= (compile in Compile) dependsOn (preoptimizeJS in (scalajs, Compile)),
       dist <<= dist dependsOn (optimizeJS in (scalajs, Compile)),
-      watchSources <++= (sourceDirectory in (scalajs, Compile)).map { path => (path ** "*.scala").get},
-      sharedScalaSetting,
-      libraryDependencies ++= Seq()
+      addSharedSrcSetting,
+      libraryDependencies ++= Seq(),
+      EclipseKeys.skipParents in ThisBuild := false
     ) ++ (
       // ask scalajs project to put its outputs in scalajsOutputDir
-      Seq(packageExternalDepsJS, packageInternalDepsJS, packageExportedProductsJS, optimizeJS) map {
-        packageJSKey =>
-          crossTarget in (scalajs, Compile, packageJSKey) := scalajsOutputDir.value
+      Seq(packageExternalDepsJS, packageInternalDepsJS, packageExportedProductsJS, preoptimizeJS, optimizeJS) map { packageJSKey =>
+        crossTarget in (scalajs, Compile, packageJSKey) := scalajsOutputDir.value
       }
     )
 
@@ -47,16 +50,19 @@ object ApplicationBuild extends Build with UniversalKeys {
     scalaJSSettings ++ Seq(
       name := "scalajs-game",
       version := "0.1.0-SNAPSHOT",
-      scalacOpts,
-      // Specify additional .js file to be passed to package-js and optimize-js
-      unmanagedSources in (Compile, ScalaJSKeys.packageJS) += baseDirectory.value / "js" / "startup.js",
-      sharedScalaSetting,
       libraryDependencies ++= Seq(
         "org.scala-lang.modules.scalajs" %% "scalajs-jasmine-test-framework" % scalaJSVersion % "test",
-        "org.scala-lang.modules.scalajs" %% "scalajs-dom" % "0.3-SNAPSHOT"
-      )
+        "org.scala-lang.modules.scalajs" %% "scalajs-dom" % "0.3"
+      ),
+      addSharedSrcSetting
     )
 
-  lazy val scalacOpts = scalacOptions ++= Seq("-unchecked", "-deprecation", "-feature")
-  lazy val sharedScalaSetting = unmanagedSourceDirectories in Compile += baseDirectory.value / ".." / "scala"
+  lazy val sharedScalaSettings =
+    Seq(
+      name := "shared-scala-game",
+      scalaSource in Compile := baseDirectory.value,
+      EclipseKeys.skipProject := true
+    )
+
+  lazy val addSharedSrcSetting = unmanagedSourceDirectories in Compile += new File((baseDirectory.value / ".." / sharedSrcDir).getCanonicalPath)
 }
