@@ -28,6 +28,8 @@
       window.game.receiveGameInitNotif(data);
     } else if (data.notifType == "playerSnakeId") {
       window.game.receivePlayerSnakeId(data);
+    } else if (data.notifType == "heartbeat") {
+      // do nothing
     } else if (data.notifType == "disconnectedSnake") {
       window.game.receiveDisconnectedSnake(data);
     } else {
