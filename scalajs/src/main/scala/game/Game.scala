@@ -38,16 +38,17 @@ trait GameVars extends mutable.GameMutations with GameConstants {
 }
 
 @JSExport
-object Game extends GameVars {
+object Game extends GameVars with GamePrediction {
   def onGameLoopNotif(gameLoopNotif: GameLoopNotif) = {
     applyGameSnapshot(lastGameSnapshot)
     updateOnGameLoopNotif(gameLoopNotif)
     lastGameSnapshot = captureSnapshot()
+    super.restartGamePrediction()
   }
 
   private def updateOnGameLoopNotif(gameLoopNotif: GameLoopNotif) = {
-    updateMove(gameLoopNotif.snakes)
-    updateFood(gameLoopNotif.foods)
+    updateMoves(gameLoopNotif.snakes)
+    updateFoods(gameLoopNotif.foods)
     super.moveSnakes()
   }
 
@@ -66,16 +67,19 @@ object Game extends GameVars {
     foodsInDigestion = gameSnapshot.foodsInDigestion
   }
 
-  private def updateMove(snakeMoves: Set[SnakeMove]): Unit = {
-    for {
-      SnakeMove(snakeId, newMove) <- snakeMoves
-      snake <- snakes.get(snakeId)
-    } {
-      snakes += snakeId -> snake.copy(move = newMove)
+  private def updateMoves(snakeMoves: Set[SnakeMove]): Unit = {
+    for (SnakeMove(snakeId, newMove) <- snakeMoves) {
+      updateSnakeMove(snakeId, newMove)
     }
   }
 
-  private def updateFood(newFoods: Set[Block]): Unit = {
+  private def updateSnakeMove(snakeId: SnakeId, move: Move) = {
+    for (snake <- snakes.get(snakeId)) {
+      snakes += snakeId -> snake.copy(move = move)
+    }
+  }
+
+  private def updateFoods(newFoods: Set[Block]): Unit = {
     for (newFood <- newFoods) {
       foods += newFood
     }
@@ -118,14 +122,17 @@ object Game extends GameVars {
     val gameInitNotif = GameNotifParser.parseGameInitNotif(notif)
     snakes = gameInitNotif.snakes.map(s => s.snakeId -> s).toMap
     renderLoop()
+    super.startGamePrediction()
   }
 
   @JSExport
   def main(gameSocket: WebSocket): Unit = {
     val keyboard = new Keyboard()
     keyboard.registerEventListeners()
+
     keyboard.onMove { move =>
       sendMove(gameSocket, move)
+      updateSnakeMove(playerSnakeId, move)
     }
   }
 }
