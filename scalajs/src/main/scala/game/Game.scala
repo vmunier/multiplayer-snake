@@ -13,13 +13,15 @@ import shared.models.Position
 import shared.models.Colors
 import shared.models.Moves._
 import shared.models.GameConstants
-
 import shared.models.GameNotif
 import shared.models.GameLoopNotif
 import shared.models.IdTypes.SnakeId
 import shared.models.SnakeMove
 import shared.services.SnakeService
 import shared.services.BlockService
+import org.scalajs.dom.WebSocket
+import scala.scalajs.js.JSON
+import org.scalajs.dom.MessageEvent
 
 trait GameVars extends mutable.GameMutations with GameConstants {
 
@@ -28,14 +30,24 @@ trait GameVars extends mutable.GameMutations with GameConstants {
     (Canvas.windowWidth / NbBlocksInWidth).toInt)
 
   var playerSnakeId: SnakeId = new SnakeId(0)
+  var lastGameSnapshot = captureSnapshot()
+
+  protected def captureSnapshot(): GameSnapshot = {
+    GameSnapshot(snakes, losingSnakes, foods, foodsInDigestion)
+  }
 }
 
 @JSExport
 object Game extends GameVars {
   def onGameLoopNotif(gameLoopNotif: GameLoopNotif) = {
+    applyGameSnapshot(lastGameSnapshot)
+    updateOnGameLoopNotif(gameLoopNotif)
+    lastGameSnapshot = captureSnapshot()
+  }
+
+  private def updateOnGameLoopNotif(gameLoopNotif: GameLoopNotif) = {
     updateMove(gameLoopNotif.snakes)
     updateFood(gameLoopNotif.foods)
-
     super.moveSnakes()
   }
 
@@ -45,6 +57,13 @@ object Game extends GameVars {
     val gameLost = losingSnakes.contains(playerSnakeId)
     val maybeSnakeHead = snakes.get(playerSnakeId).map(_.head)
     Canvas.render(playerNbEatenBlocks, maybeSnakeHead, blocks, gameOver, gameLost)
+  }
+
+  def applyGameSnapshot(gameSnapshot: GameSnapshot) = {
+    snakes = gameSnapshot.snakes
+    losingSnakes = gameSnapshot.losingSnakes
+    foods = gameSnapshot.foods
+    foodsInDigestion = gameSnapshot.foodsInDigestion
   }
 
   private def updateMove(snakeMoves: Set[SnakeMove]): Unit = {
@@ -73,6 +92,7 @@ object Game extends GameVars {
       val canvas = Canvas.init()
       val gameInitNotif = GameNotifParser.parseGameInitNotif(notif)
       snakes = gameInitNotif.snakes.map(s => s.snakeId -> s).toMap
+      lastGameSnapshot = captureSnapshot()
       renderLoop()
     }
 
@@ -88,7 +108,15 @@ object Game extends GameVars {
   }
   initJsInterfaces()
 
+  private def receiveGameInitNotif = (notif: JsGameInitNotif) => {
+    val canvas = Canvas.init()
+    val gameInitNotif = GameNotifParser.parseGameInitNotif(notif)
+    snakes = gameInitNotif.snakes.map(s => s.snakeId -> s).toMap
+    renderLoop()
+  }
+
   @JSExport
-  def main(): Unit = {
+  def main(gameSocket: WebSocket): Unit = {
+    new Keyboard(gameSocket).registerEventListeners()
   }
 }

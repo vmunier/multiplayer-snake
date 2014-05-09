@@ -76,6 +76,4 @@ object Canvas {
     ctx.fillStyle = style
     ctx.fillRect(x, y, width, height)
   }
-
-
 }

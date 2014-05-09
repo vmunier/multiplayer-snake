@@ -8,10 +8,6 @@
   var WS = window['MozWebSocket'] ? MozWebSocket : WebSocket;
   var gameSocket = new WS("@routes.Application.joinGame(gameUUID, maybeCreatorUUID).webSocketURL()");
 
-  var sendMove = function(move) {
-    gameSocket.send(JSON.stringify({move: move}));
-  };
-
   @maybeCreatorUUID.map { creatorUUID =>
     $(".startGameBtn").click(function(){
       $.ajax({url:"@routes.Application.startGame(gameUUID, creatorUUID)"});
@@ -37,12 +33,7 @@
     }
   };
 
-  addEventListener("keydown", function(e) {
-    if (e.keyCode == 37) sendMove('left');
-    else if (e.keyCode == 38) sendMove('up');
-    else if (e.keyCode == 39) sendMove('right');
-    else if (e.keyCode == 40) sendMove('down');
-  }, false);
-
   gameSocket.onmessage = receiveEvent;
+
+  Game().main(gameSocket);
 })();
