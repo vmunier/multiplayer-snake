@@ -104,9 +104,14 @@ object Game extends GameVars {
 
     g.window.game.receiveDisconnectedSnake = (notif: JsDisconnectedSnakeNotif) => {
       killSnake(new SnakeId(notif.disconnectedSnakeId))
+      lastGameSnapshot = captureSnapshot()
     }
   }
   initJsInterfaces()
+
+  def sendMove(gameSocket: WebSocket, move: Move): Unit = {
+    gameSocket.send(s"""{"move": "${move.name}"}""")
+  }
 
   private def receiveGameInitNotif = (notif: JsGameInitNotif) => {
     val canvas = Canvas.init()
@@ -117,6 +122,10 @@ object Game extends GameVars {
 
   @JSExport
   def main(gameSocket: WebSocket): Unit = {
-    new Keyboard(gameSocket).registerEventListeners()
+    val keyboard = new Keyboard()
+    keyboard.registerEventListeners()
+    keyboard.onMove { move =>
+      sendMove(gameSocket, move)
+    }
   }
 }
