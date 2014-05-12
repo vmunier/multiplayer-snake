@@ -6,6 +6,7 @@ import org.scalajs.dom
 import org.scalajs.dom.extensions._
 import shared.models.Block
 import shared.models.Snake
+import shared.models.GameConstants._
 
 object Canvas {
   lazy val canvas = dom.document.createElement("canvas").cast[dom.HTMLCanvasElement]
@@ -16,8 +17,8 @@ object Canvas {
   lazy val windowWidth = g.window.innerWidth * 0.98
 
   def init() = {
-    canvas.width = Game.NbBlocksInWidth * Game.BlockSize
-    canvas.height = Game.NbBlocksInHeight * Game.BlockSize
+    canvas.width = NbBlocksInWidth * Game.BlockSize
+    canvas.height = NbBlocksInHeight * Game.BlockSize
 
     g.jQuery(".gameArea").empty().append(canvas)
     canvas

@@ -3,8 +3,15 @@ package shared.services
 import shared.models.Snake
 import shared.models.Position
 import shared.models.Block
+import shared.models.GameConstants
 
 case class SnakeService(nbBlocksInWidth: Int, nbBlocksInHeight: Int) {
+  def moveSnakes(snakes: Seq[Snake]): Seq[Snake] = {
+    for (snake <- snakes) yield {
+      moveSnake(snake)
+    }
+  }
+
   def moveSnake(snake: Snake): Snake = {
     val movedTail = moveTailForward(snake)
     val movedHead = moveHead(snake)
@@ -28,3 +35,9 @@ case class SnakeService(nbBlocksInWidth: Int, nbBlocksInHeight: Int) {
     }
   }
 }
+
+trait SnakeServiceLayer extends  {
+  import shared.models.GameConstants._
+  val snakeService: SnakeService = SnakeService(NbBlocksInWidth, NbBlocksInHeight)
+}
+

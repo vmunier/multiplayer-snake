@@ -22,67 +22,74 @@ import shared.services.BlockService
 import org.scalajs.dom.WebSocket
 import scala.scalajs.js.JSON
 import org.scalajs.dom.MessageEvent
+import shared.models.GameState
+import shared.models.GameSnakes
+import shared.models.GameConstants._
+import shared.services.TurnService
 
-trait GameVars extends mutable.GameMutations with GameConstants {
-
+trait GameVars {
   lazy val BlockSize = Math.min(
     (Canvas.windowHeight / NbBlocksInHeight).toInt,
     (Canvas.windowWidth / NbBlocksInWidth).toInt)
 
+  var gameState = GameState()
   var playerSnakeId: SnakeId = new SnakeId(0)
-  var lastGameSnapshot = captureSnapshot()
+  var _savedGameState = gameState
 
-  protected def captureSnapshot(): GameSnapshot = {
-    GameSnapshot(snakes, losingSnakes, foods, foodsInDigestion)
+  def saveGameState(gameState: GameState) {
+    _savedGameState = gameState
   }
+
+  def getSavedGameState = _savedGameState
 }
 
 @JSExport
 object Game extends GameVars with GamePrediction {
+
+  override def callOnTick(): Unit = {
+    gameState = TurnService.afterTurn(gameState)
+  }
+
   def onGameLoopNotif(gameLoopNotif: GameLoopNotif) = {
-    applyGameSnapshot(lastGameSnapshot)
+    gameState = getSavedGameState
     updateOnGameLoopNotif(gameLoopNotif)
-    lastGameSnapshot = captureSnapshot()
+    saveGameState(gameState)
     super.restartGamePrediction()
   }
 
   private def updateOnGameLoopNotif(gameLoopNotif: GameLoopNotif) = {
-    updateMoves(gameLoopNotif.snakes)
-    updateFoods(gameLoopNotif.foods)
-    super.moveSnakes()
+    gameState = gameState.copy(snakes =
+      gameState.snakes.mergeAliveSnakes(changeSnakeMoves(gameLoopNotif.snakes).toSeq))
+
+    gameState = gameState.copy(foods =
+      gameState.foods.copy(available = gameState.foods.available ++ gameLoopNotif.foods))
+
+    callOnTick()
+  }
+
+  private def changeSnakeMoves(snakeMoves: Set[SnakeMove]): Set[Snake] = {
+    for {
+      SnakeMove(snakeId, newMove) <- snakeMoves
+      newSnake <- changeSnakeMove(snakeId, newMove, gameState.snakes.aliveMap)
+    } yield {
+      newSnake
+    }
+  }
+
+  private def changeSnakeMove(snakeId: SnakeId, move: Move, aliveSnakesMap: Map[SnakeId, Snake]): Option[Snake] = {
+    for (snake <- aliveSnakesMap.get(snakeId)) yield {
+      snake.copy(move = move)
+    }
   }
 
   def render() = {
-    val playerNbEatenBlocks = (snakes ++ losingSnakes).get(playerSnakeId).map(_.nbEatenBlocks).getOrElse(0)
-    val blocks = (snakes.values.flatMap(_.blocks) ++ foods ++ foodsInDigestion).toSeq
-    val gameLost = losingSnakes.contains(playerSnakeId)
-    val maybeSnakeHead = snakes.get(playerSnakeId).map(_.head)
-    Canvas.render(playerNbEatenBlocks, maybeSnakeHead, blocks, gameOver, gameLost)
-  }
+    val gameSnakes = gameState.snakes
 
-  def applyGameSnapshot(gameSnapshot: GameSnapshot) = {
-    snakes = gameSnapshot.snakes
-    losingSnakes = gameSnapshot.losingSnakes
-    foods = gameSnapshot.foods
-    foodsInDigestion = gameSnapshot.foodsInDigestion
-  }
-
-  private def updateMoves(snakeMoves: Set[SnakeMove]): Unit = {
-    for (SnakeMove(snakeId, newMove) <- snakeMoves) {
-      updateSnakeMove(snakeId, newMove)
-    }
-  }
-
-  private def updateSnakeMove(snakeId: SnakeId, move: Move) = {
-    for (snake <- snakes.get(snakeId)) {
-      snakes += snakeId -> snake.copy(move = move)
-    }
-  }
-
-  private def updateFoods(newFoods: Set[Block]): Unit = {
-    for (newFood <- newFoods) {
-      foods += newFood
-    }
+    val playerNbEatenBlocks = (gameSnakes.allMap).get(playerSnakeId).map(_.nbEatenBlocks).getOrElse(0)
+    val blocks = gameSnakes.alive.flatMap(_.blocks) ++ gameState.foods.all
+    val gameLost = gameSnakes.dead.exists(_.snakeId == playerSnakeId)
+    val maybeSnakeHead = gameSnakes.aliveMap.get(playerSnakeId).map(_.head)
+    Canvas.render(playerNbEatenBlocks, maybeSnakeHead, blocks, gameState.gameOver, gameLost)
   }
 
   private val renderLoop: () => Unit = () => {
@@ -95,8 +102,8 @@ object Game extends GameVars with GamePrediction {
     g.window.game.receiveGameInitNotif = (notif: JsGameInitNotif) => {
       val canvas = Canvas.init()
       val gameInitNotif = GameNotifParser.parseGameInitNotif(notif)
-      snakes = gameInitNotif.snakes.map(s => s.snakeId -> s).toMap
-      lastGameSnapshot = captureSnapshot()
+      gameState = gameState.copy(snakes = GameSnakes(gameInitNotif.snakes))
+      saveGameState(gameState)
       renderLoop()
     }
 
@@ -107,22 +114,15 @@ object Game extends GameVars with GamePrediction {
     }
 
     g.window.game.receiveDisconnectedSnake = (notif: JsDisconnectedSnakeNotif) => {
-      killSnake(new SnakeId(notif.disconnectedSnakeId))
-      lastGameSnapshot = captureSnapshot()
+      gameState = gameState.copy(
+        snakes = gameState.snakes.addDeadSnakeIds(new SnakeId(notif.disconnectedSnakeId)))
+      saveGameState(gameState)
     }
   }
   initJsInterfaces()
 
   def sendMove(gameSocket: WebSocket, move: Move): Unit = {
     gameSocket.send(s"""{"move": "${move.name}"}""")
-  }
-
-  private def receiveGameInitNotif = (notif: JsGameInitNotif) => {
-    val canvas = Canvas.init()
-    val gameInitNotif = GameNotifParser.parseGameInitNotif(notif)
-    snakes = gameInitNotif.snakes.map(s => s.snakeId -> s).toMap
-    renderLoop()
-    super.startGamePrediction()
   }
 
   @JSExport
@@ -132,7 +132,9 @@ object Game extends GameVars with GamePrediction {
 
     keyboard.onMove { move =>
       sendMove(gameSocket, move)
-      updateSnakeMove(playerSnakeId, move)
+
+      gameState = gameState.copy(snakes =
+        gameState.snakes.mergeAliveSnakes(changeSnakeMove(playerSnakeId, move, gameState.snakes.aliveMap).toSeq))
     }
   }
 }
