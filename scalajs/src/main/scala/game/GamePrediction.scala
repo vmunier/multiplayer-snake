@@ -18,9 +18,4 @@ trait GamePrediction {
   def stopGamePrediction() = {
     g.clearInterval(intervalId)
   }
-
-  def restartGamePrediction() = {
-    stopGamePrediction()
-    startGamePrediction()
-  }
 }

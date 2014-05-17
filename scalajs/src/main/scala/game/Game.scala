@@ -51,10 +51,11 @@ object Game extends GameVars with GamePrediction {
   }
 
   def onGameLoopNotif(gameLoopNotif: GameLoopNotif) = {
+    super.stopGamePrediction()
     gameState = getSavedGameState
     updateOnGameLoopNotif(gameLoopNotif)
     saveGameState(gameState)
-    super.restartGamePrediction()
+    super.startGamePrediction()
   }
 
   private def updateOnGameLoopNotif(gameLoopNotif: GameLoopNotif) = {
