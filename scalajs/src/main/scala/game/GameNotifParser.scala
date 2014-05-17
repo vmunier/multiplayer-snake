@@ -26,7 +26,7 @@ object GameNotifParser {
     } yield {
       SnakeMove(new SnakeId(snake.snakeId), move)
     }
-    GameLoopNotif(foods, snakes)
+    GameLoopNotif(jsGameLoopNotif.id.toLong, foods, snakes)
   }
 
   def parseGameInitNotif(jsInitNotif: JsGameInitNotif): GameInitNotif = {
@@ -64,6 +64,7 @@ trait JsSnakeMove extends js.Object {
 }
 
 trait JsGameLoopNotif extends js.Object {
+  def id: js.Number
   def notifType: String
   def foods: js.Array[JsBlock]
   def snakes: js.Array[JsSnakeMove]
