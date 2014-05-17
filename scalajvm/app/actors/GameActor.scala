@@ -31,6 +31,7 @@ import shared.models.SnakeMove
 import shared.services.BlockService
 import shared.services.MoveService
 import shared.services.TurnService
+import shared.services.GameStateService
 
 object GameActor {
   case class MoveSnake(snakeId: SnakeId, move: Move)
@@ -141,12 +142,8 @@ class GameActor(override val notifsChannel: Channel[JsValue]) extends Actor with
   }
 
   def onGameTick() = {
-    for {
-      SnakeMove(snakeId, move) <- nextGameNotif.snakes
-      snake <- gameState.snakes.aliveMap.get(snakeId)
-    } {
-      gameState = gameState.copy(snakes = gameState.snakes.mergeAliveSnakes(Seq(snake.copy(move = move))))
-    }
+
+    gameState = GameStateService.moveSnakes(gameState, nextGameNotif.snakes)
 
     gameState = TurnService.afterTurn(gameState)
 
@@ -179,8 +176,7 @@ class GameActor(override val notifsChannel: Channel[JsValue]) extends Actor with
   def addNewFood(avlblePositions: IndexedSeq[Position]) = {
     val newFood = BlockService.randomNewBlock(availablePositions)
 
-    gameState = gameState.copy(foods =
-      gameState.foods.copy(available = gameState.foods.available + newFood))
+    gameState = GameStateService.addNewFood(gameState, newFood)
 
     nextGameNotif = nextGameNotif.copy(foods = nextGameNotif.foods + newFood)
     newFood

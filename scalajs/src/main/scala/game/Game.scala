@@ -26,6 +26,8 @@ import shared.models.GameState
 import shared.models.GameSnakes
 import shared.models.GameConstants._
 import shared.services.TurnService
+import shared.services.GameStateService
+import shared.models.SnakeMove
 
 trait GameVars {
   lazy val BlockSize = Math.min(
@@ -59,28 +61,10 @@ object Game extends GameVars with GamePrediction {
   }
 
   private def updateOnGameLoopNotif(gameLoopNotif: GameLoopNotif) = {
-    gameState = gameState.copy(snakes =
-      gameState.snakes.mergeAliveSnakes(changeSnakeMoves(gameLoopNotif.snakes).toSeq))
-
-    gameState = gameState.copy(foods =
-      gameState.foods.copy(available = gameState.foods.available ++ gameLoopNotif.foods))
+    gameState = GameStateService.moveSnakes(gameState, gameLoopNotif.snakes)
+    gameState = GameStateService.addNewFoods(gameState, gameLoopNotif.foods)
 
     callOnTick()
-  }
-
-  private def changeSnakeMoves(snakeMoves: Set[SnakeMove]): Set[Snake] = {
-    for {
-      SnakeMove(snakeId, newMove) <- snakeMoves
-      newSnake <- changeSnakeMove(snakeId, newMove, gameState.snakes.aliveMap)
-    } yield {
-      newSnake
-    }
-  }
-
-  private def changeSnakeMove(snakeId: SnakeId, move: Move, aliveSnakesMap: Map[SnakeId, Snake]): Option[Snake] = {
-    for (snake <- aliveSnakesMap.get(snakeId)) yield {
-      snake.copy(move = move)
-    }
   }
 
   def render() = {
@@ -133,9 +117,7 @@ object Game extends GameVars with GamePrediction {
 
     keyboard.onMove { move =>
       sendMove(gameSocket, move)
-
-      gameState = gameState.copy(snakes =
-        gameState.snakes.mergeAliveSnakes(changeSnakeMove(playerSnakeId, move, gameState.snakes.aliveMap).toSeq))
+      gameState = GameStateService.moveSnake(gameState, SnakeMove(playerSnakeId, move))
     }
   }
 }
