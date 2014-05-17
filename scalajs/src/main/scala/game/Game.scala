@@ -54,17 +54,14 @@ object Game extends GameVars with GamePrediction {
 
   def onGameLoopNotif(gameLoopNotif: GameLoopNotif) = {
     super.stopGamePrediction()
-    gameState = getSavedGameState
-    updateOnGameLoopNotif(gameLoopNotif)
-    saveGameState(gameState)
-    super.startGamePrediction()
-  }
 
-  private def updateOnGameLoopNotif(gameLoopNotif: GameLoopNotif) = {
+    gameState = getSavedGameState
     gameState = GameStateService.moveSnakes(gameState, gameLoopNotif.snakes)
     gameState = GameStateService.addNewFoods(gameState, gameLoopNotif.foods)
-
     callOnTick()
+    saveGameState(gameState)
+
+    super.startGamePrediction()
   }
 
   def render() = {
