@@ -9,6 +9,7 @@ case class GameSnakes(alive: Seq[Snake] = Seq(), dead: Seq[Snake] = Seq()) {
   lazy val all = alive ++ dead
   lazy val allMap = toMap(all)
 
+  assert(all.groupBy(_.snakeId).values.forall(_.size <= 1))
   private def toMap(snakes: Seq[Snake]): Map[SnakeId, Snake] = {
     snakes.map(s => s.snakeId -> s).toMap
   }
