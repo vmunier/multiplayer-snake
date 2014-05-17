@@ -7,6 +7,7 @@ import shared.models.Position
 import shared.models.Moves
 import shared.models.SnakeMove
 import shared.models.IdTypes.SnakeId
+import shared.models.IdTypes.GameLoopId
 import shared.models.GameLoopNotif
 import shared.models.GameInitNotif
 import shared.models.Snake
@@ -26,7 +27,7 @@ object GameNotifParser {
     } yield {
       SnakeMove(new SnakeId(snake.snakeId), move)
     }
-    GameLoopNotif(jsGameLoopNotif.id.toLong, foods, snakes)
+    GameLoopNotif(new GameLoopId(jsGameLoopNotif.id.toLong), foods, snakes)
   }
 
   def parseGameInitNotif(jsInitNotif: JsGameInitNotif): GameInitNotif = {

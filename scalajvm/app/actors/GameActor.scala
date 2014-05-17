@@ -23,6 +23,7 @@ import shared.models.GameLoopNotif
 import shared.models.GameState
 import shared.models.Heartbeat
 import shared.models.IdTypes.SnakeId
+import shared.models.IdTypes.GameLoopId
 import shared.models.Moves.Move
 import shared.models.Position
 import shared.models.Snake
@@ -153,7 +154,8 @@ class GameActor(override val notifsChannel: Channel[JsValue]) extends Actor with
       addNewFood(availablePositions)
     }
     notifsChannel.push(Json.toJson(nextGameNotif))
-    nextGameNotif = GameLoopNotif(nextGameNotif.id + 1)
+
+    nextGameNotif = GameLoopNotif(new GameLoopId(nextGameNotif.gameLoopId.id + 1))
 
     if (gameState.snakes.alive.size <= 1) {
       stopAll()

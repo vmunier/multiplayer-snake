@@ -1,6 +1,7 @@
 package shared.models
 
 import IdTypes.SnakeId
+import IdTypes.GameLoopId
 import Moves.Move
 
 case class SnakeMove(snakeId: SnakeId, move: Move)
@@ -9,7 +10,7 @@ sealed trait GameNotif {
   def notifType: String
 }
 
-case class GameLoopNotif(id: Long = 0, foods: Set[Block] = Set(), snakes: Set[SnakeMove] = Set(), override val notifType: String = "gameLoop") extends GameNotif {
+case class GameLoopNotif(gameLoopId: GameLoopId = new GameLoopId(0), foods: Set[Block] = Set(), snakes: Set[SnakeMove] = Set(), override val notifType: String = "gameLoop") extends GameNotif {
 
  def withNewSnakeMove(snakeMove: SnakeMove) = {
     val snakesMap: Map[SnakeId, Move] = snakes.map(snake => (snake.snakeId, snake.move)).toMap + (snakeMove.snakeId -> snakeMove.move)

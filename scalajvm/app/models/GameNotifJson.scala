@@ -37,6 +37,15 @@ object GameNotifJsonImplicits {
       .getOrElse(JsError(s"A SnakeId should be an integer"))
   }
 
+  implicit val gameLoopIdWrites = new Writes[GameLoopId] {
+    def writes(gameLoopId: GameLoopId): JsValue = Json.toJson(gameLoopId.id)
+  }
+
+  implicit val gameLoopIdReads = new Reads[GameLoopId] {
+    override def reads(gameLoopId: JsValue): JsResult[GameLoopId] = gameLoopId.asOpt[Long].map(id => JsSuccess(new GameLoopId(id)))
+      .getOrElse(JsError(s"A GameLoopId should be a long"))
+  }
+
   implicit val positionFormat = Json.format[Position]
   implicit val blockFormat = Json.format[Block]
   implicit val snakeMoveFormat = Json.format[SnakeMove]
