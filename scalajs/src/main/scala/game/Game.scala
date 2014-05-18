@@ -55,12 +55,15 @@ object Game extends GameVars with GamePrediction {
   def onGameLoopNotif(gameLoopNotif: GameLoopNotif) = {
     super.stopGamePrediction()
 
-    gameState = getSavedGameState
-    gameState = GameStateService.moveSnakes(gameState, gameLoopNotif.snakes)
-    gameState = GameStateService.addNewFoods(gameState, gameLoopNotif.foods)
-    callOnTick()
-    saveGameState(gameState)
+    val changeSnakeMoves: GameState => GameState = GameStateService.changeSnakeMoves(_, gameLoopNotif.snakes)
+    val addNewFoods: GameState => GameState = GameStateService.addNewFoods(_, gameLoopNotif.foods)
+    val newGameState = (changeSnakeMoves andThen addNewFoods andThen (TurnService.afterTurn _))(getSavedGameState)
 
+    if (newGameState != gameState) {
+      gameState = newGameState
+    }
+
+    saveGameState(gameState)
     super.startGamePrediction()
   }
 
@@ -114,7 +117,7 @@ object Game extends GameVars with GamePrediction {
 
     keyboard.onMove { move =>
       sendMove(gameSocket, move)
-      gameState = GameStateService.moveSnake(gameState, SnakeMove(playerSnakeId, move))
+      gameState = GameStateService.changeSnakeMove(gameState, SnakeMove(playerSnakeId, move))
     }
   }
 }

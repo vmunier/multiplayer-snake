@@ -10,8 +10,8 @@ import shared.models.Block
 
 object GameStateService {
 
-  def moveSnake(gameState: GameState, snakeMove: SnakeMove): GameState = moveSnakes(gameState, Set(snakeMove))
-  def moveSnakes(gameState: GameState, snakeMoves: Set[SnakeMove]): GameState = {
+  def changeSnakeMove(gameState: GameState, snakeMove: SnakeMove): GameState = changeSnakeMoves(gameState, Set(snakeMove))
+  def changeSnakeMoves(gameState: GameState, snakeMoves: Set[SnakeMove]): GameState = {
     gameState.copy(snakes =
       gameState.snakes.mergeAliveSnakes(changeSnakeMoves(snakeMoves, gameState.snakes.aliveMap).toSeq))
   }

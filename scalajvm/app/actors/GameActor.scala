@@ -143,7 +143,7 @@ class GameActor(override val notifsChannel: Channel[JsValue]) extends Actor with
 
   def onGameTick() = {
 
-    gameState = GameStateService.moveSnakes(gameState, nextGameNotif.snakes)
+    gameState = GameStateService.changeSnakeMoves(gameState, nextGameNotif.snakes)
 
     gameState = TurnService.afterTurn(gameState)
 
