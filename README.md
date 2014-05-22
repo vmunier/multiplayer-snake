@@ -1,7 +1,7 @@
 # Play Scala.js Snake Game
 
 ## Live demo
-http://www.vmunier.com/games
+http://snake.vmunier.com
 
 ## Run the application
 ```shell
