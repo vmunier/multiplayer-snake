@@ -11,8 +11,11 @@ object IdTypes {
     override def toString = id.toString
   }
 
-  class GameLoopId(val id: Long) extends AnyVal {
+  class GameLoopId(val id: Int) extends AnyVal {
     override def toString = id.toString
   }
+
+  implicit val SnakeIdToInt = (snakeId: SnakeId) => snakeId.id
+  implicit val GameLoopIdToLong = (gameLoopId: GameLoopId) => gameLoopId.id
 }
 

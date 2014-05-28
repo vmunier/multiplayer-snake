@@ -1,42 +1,51 @@
 package game
 
 import scala.scalajs.js
-import js.annotation.JSExport
-import js.Dynamic.{ global => g }
-import org.scalajs.dom
-import org.scalajs.dom.extensions._
-import org.scalajs.dom.HTMLCanvasElement
-import shared.models.mutable
-import shared.models.Snake
-import shared.models.Block
-import shared.models.Position
-import shared.models.Colors
-import shared.models.Moves._
-import shared.models.GameConstants
-import shared.models.GameNotif
-import shared.models.GameLoopNotif
-import shared.models.IdTypes.SnakeId
-import shared.models.SnakeMove
-import shared.services.SnakeService
-import shared.services.BlockService
-import org.scalajs.dom.WebSocket
-import scala.scalajs.js.JSON
-import org.scalajs.dom.MessageEvent
-import shared.models.GameState
-import shared.models.GameSnakes
-import shared.models.GameConstants._
-import shared.services.TurnService
-import shared.services.GameStateService
-import shared.models.SnakeMove
+import scala.scalajs.js.Any.fromFunction0
+import scala.scalajs.js.Any.fromFunction1
+import scala.scalajs.js.Any.fromInt
+import scala.scalajs.js.Any.fromString
+import scala.scalajs.js.Dynamic.{global => g}
+import scala.scalajs.js.Number.toDouble
+import scala.scalajs.js.annotation.JSExport
 
-trait GameVars {
+import org.scalajs.dom.WebSocket
+
+import shared.models.GameConstants.NbBlocksInHeight
+import shared.models.GameConstants.NbBlocksInWidth
+import shared.models.GameLoopNotif
+import shared.models.GameSnakes
+import shared.models.GameState
+import shared.models.IdTypes.GameLoopId
+import shared.models.IdTypes.GameLoopIdToLong
+import shared.models.IdTypes.SnakeId
+import shared.models.Moves.Move
+import shared.models.Moves.Right
+import shared.models.SnakeMove
+import shared.services.GameStateService
+import shared.services.MoveService
+import shared.services.TurnService
+
+trait PlayerSnakeIdAccess {
+  def playerSnakeId: SnakeId
+}
+
+trait GameVars extends PlayerSnakeIdAccess {
   lazy val BlockSize = Math.min(
     (Canvas.windowHeight / NbBlocksInHeight).toInt,
     (Canvas.windowWidth / NbBlocksInWidth).toInt)
 
-  var gameState = GameState()
+  var _gameState = GameState()
+  def gameState = _gameState
+  def gameState_=(newGameState: GameState) {
+    _gameState = newGameState
+  }
+
+  var lastMove: Move = Right
+
   var playerSnakeId: SnakeId = new SnakeId(0)
   var _savedGameState = gameState
+  var lastGameLoopId = new GameLoopId(0)
 
   def saveGameState(gameState: GameState) {
     _savedGameState = gameState
@@ -48,23 +57,45 @@ trait GameVars {
 @JSExport
 object Game extends GameVars with GamePrediction {
 
-  override def callOnTick(): Unit = {
-    gameState = TurnService.afterTurn(gameState)
+  override val callOnTick: () => Unit = () => {
+    val changeSnakeMove = GameStateService.changeSnakeMove(SnakeMove(playerSnakeId, lastMove)) _
+    val changedGameState = (changeSnakeMove andThen TurnService.afterTurn _)(gameState)
+    // if a snake is dead, we prefer waiting confirmation of the server and not apply client prediction
+    if (changedGameState.snakes.alive.size == gameState.snakes.alive.size) {
+      gameState = changedGameState
+      lastGameLoopId = new GameLoopId(lastGameLoopId + 1)
+      registerPlayerMove(lastGameLoopId, lastMove)
+    }
   }
 
-  def onGameLoopNotif(gameLoopNotif: GameLoopNotif) = {
-    super.stopGamePrediction()
+  def onGameLoopNotif(serverLoopNotif: GameLoopNotif) = {
+    val changeSnakeMoves = GameStateService.changeSnakeMoves(serverLoopNotif.snakes) _
+    val addNewFoods = GameStateService.addNewFoods(serverLoopNotif.foods) _
+    val serverGameState = (changeSnakeMoves andThen addNewFoods andThen (TurnService.afterTurn _))(getSavedGameState)
+    val serverLoopId = serverLoopNotif.gameLoopId
 
-    val changeSnakeMoves: GameState => GameState = GameStateService.changeSnakeMoves(_, gameLoopNotif.snakes)
-    val addNewFoods: GameState => GameState = GameStateService.addNewFoods(_, gameLoopNotif.foods)
-    val newGameState = (changeSnakeMoves andThen addNewFoods andThen (TurnService.afterTurn _))(getSavedGameState)
+    saveGameState(serverGameState)
+    gameState = serverGameState
 
-    if (newGameState != gameState) {
-      gameState = newGameState
+    if (lastGameLoopId < serverLoopId) {
+      lastGameLoopId = serverLoopId
+      for (snake <- serverGameState.snakes.aliveMap.get(playerSnakeId)) {
+        lastMove = snake.move
+      }
+    } else {
+      val serverSnakeMove = serverGameState.snakes.aliveMap.get(playerSnakeId).map(_.move)
+      val sameMove = super.getMoveFromHistory(serverLoopId) == serverSnakeMove
+      if (sameMove) {
+        gameState = super.reconcileWithServer(new GameLoopId(serverLoopId + 1), new GameLoopId(lastGameLoopId), serverGameState)
+        super.removeGameLoopId(serverLoopId)
+      } else {
+        eraseHistory()
+        for (move <- serverSnakeMove) {
+          lastMove = move
+        }
+        lastGameLoopId = serverLoopId
+      }
     }
-
-    saveGameState(gameState)
-    super.startGamePrediction()
   }
 
   def render() = {
@@ -90,6 +121,7 @@ object Game extends GameVars with GamePrediction {
       gameState = gameState.copy(snakes = GameSnakes(gameInitNotif.snakes))
       saveGameState(gameState)
       renderLoop()
+      super.startGamePrediction()
     }
 
     g.window.game.receiveGameLoopNotif = (x: JsGameLoopNotif) => onGameLoopNotif(GameNotifParser.parseGameLoopNotif(x))
@@ -117,7 +149,12 @@ object Game extends GameVars with GamePrediction {
 
     keyboard.onMove { move =>
       sendMove(gameSocket, move)
-      gameState = GameStateService.changeSnakeMove(gameState, SnakeMove(playerSnakeId, move))
+      for {
+        snake <- gameState.snakes.aliveMap.get(playerSnakeId)
+        if MoveService.isValidMove(snake, move)
+      } {
+        lastMove = move
+      }
     }
   }
 }

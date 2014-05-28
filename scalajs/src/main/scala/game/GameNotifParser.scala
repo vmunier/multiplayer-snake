@@ -20,14 +20,14 @@ object GameNotifParser {
     }
 
     val jsSnakes = jsGameLoopNotif.snakes.toSet
-
     val snakes = for {
       snake <- jsSnakes
       move <- Moves.fromName.lift(snake.move)
     } yield {
       SnakeMove(new SnakeId(snake.snakeId), move)
     }
-    GameLoopNotif(new GameLoopId(jsGameLoopNotif.id.toLong), foods, snakes)
+
+    GameLoopNotif(new GameLoopId(jsGameLoopNotif.gameLoopId.toInt), foods, snakes)
   }
 
   def parseGameInitNotif(jsInitNotif: JsGameInitNotif): GameInitNotif = {
@@ -65,7 +65,7 @@ trait JsSnakeMove extends js.Object {
 }
 
 trait JsGameLoopNotif extends js.Object {
-  def id: js.Number
+  def gameLoopId: js.Number
   def notifType: String
   def foods: js.Array[JsBlock]
   def snakes: js.Array[JsSnakeMove]

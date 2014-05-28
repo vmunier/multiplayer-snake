@@ -22,8 +22,7 @@ import shared.models.GameInitNotif
 import shared.models.GameLoopNotif
 import shared.models.GameState
 import shared.models.Heartbeat
-import shared.models.IdTypes.SnakeId
-import shared.models.IdTypes.GameLoopId
+import shared.models.IdTypes._
 import shared.models.Moves.Move
 import shared.models.Position
 import shared.models.Snake
@@ -141,18 +140,39 @@ class GameActor(override val notifsChannel: Channel[JsValue]) extends Actor with
     }
   }
 
-  def onGameTick() = {
+  var i = 0
+  def loseGameTicks() {
+    i += 1
+    if (i == 20) {
+      println("stop onGameTick")
+    }
+    if (i > 20 && i < 30)
+      return;
+    if (i == 30) {
+      println("return back")
+    }
+  }
 
-    gameState = GameStateService.changeSnakeMoves(gameState, nextGameNotif.snakes)
+  def maySleep() {
+    if (Math.abs(scala.util.Random.nextInt) % 4 == 0) {
+      println("sleep 1 second")
+      Thread.sleep(1000)
+    }
+  }
 
+  def onGameTick() {
+    // prediction tests:
+    //loseGameTicks()
+    //maySleep()
+    gameState = GameStateService.changeSnakeMoves(nextGameNotif.snakes)(gameState)
     gameState = TurnService.afterTurn(gameState)
 
     if (gameState.foods.available.isEmpty) {
       addNewFood(availablePositions)
     }
-    notifsChannel.push(Json.toJson(nextGameNotif))
 
-    nextGameNotif = GameLoopNotif(new GameLoopId(nextGameNotif.gameLoopId.id + 1))
+    notifsChannel.push(Json.toJson(nextGameNotif))
+    nextGameNotif = GameLoopNotif(new GameLoopId(nextGameNotif.gameLoopId + 1))
 
     if (gameState.snakes.alive.size <= 1) {
       stopAll()
@@ -176,7 +196,7 @@ class GameActor(override val notifsChannel: Channel[JsValue]) extends Actor with
   def addNewFood(avlblePositions: IndexedSeq[Position]) = {
     val newFood = BlockService.randomNewBlock(availablePositions)
 
-    gameState = GameStateService.addNewFood(gameState, newFood)
+    gameState = GameStateService.addNewFood(newFood)(gameState)
 
     nextGameNotif = nextGameNotif.copy(foods = nextGameNotif.foods + newFood)
     newFood

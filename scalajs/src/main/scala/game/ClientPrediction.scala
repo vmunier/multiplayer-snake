@@ -1,21 +1,53 @@
 package game
 
-import shared.models.mutable
-import scala.scalajs.js
-import js.Dynamic.{ global => g }
-import shared.models.GameConstants
-import shared.models.GameConstants._
+import scala.scalajs.js.Any.fromFunction0
+import scala.scalajs.js.Any.fromLong
+import scala.scalajs.js.Number.toDouble
 
-trait GamePrediction {
+import org.scalajs.dom
 
-  def callOnTick(): Unit
-  private var intervalId: Int = _
+import shared.models.GameConstants.GameTickInterval
+import shared.models.GameState
+import shared.models.IdTypes.GameLoopId
+import shared.models.Moves.Move
+import shared.models.SnakeMove
+import shared.services.GameStateService
+import shared.services.TurnService
+
+trait GamePrediction extends PlayerSnakeIdAccess {
+
+  def callOnTick: () => Unit
+  private var movesHistory = Map[GameLoopId, Move]()
 
   def startGamePrediction() = {
-    g.setInterval(callOnTick, GameTickInterval.toMillis)
+    dom.setInterval(callOnTick, GameTickInterval.toMillis).toInt
   }
 
-  def stopGamePrediction() = {
-    g.clearInterval(intervalId)
+  def reconcileWithServer(fromGameLoopId: GameLoopId, toGameLoopId: GameLoopId, fromGameState: GameState): GameState = {
+    var gameState = fromGameState
+
+    for (gameLoopId <- (fromGameLoopId.id to toGameLoopId.id).map(new GameLoopId(_))) {
+      for (snakeMove <- movesHistory.get(gameLoopId)) {
+        gameState = GameStateService.changeSnakeMove(SnakeMove(playerSnakeId, snakeMove))(gameState)
+      }
+      gameState = TurnService.afterTurn(gameState)
+    }
+    gameState
+  }
+
+  def removeGameLoopId(gameLoopId: GameLoopId) = {
+    movesHistory -= gameLoopId
+  }
+
+  def getMoveFromHistory(gameLoopId: GameLoopId): Option[Move] = {
+	movesHistory.get(gameLoopId)
+  }
+
+  def registerPlayerMove(gameLoopId: GameLoopId, move: Move) = {
+    movesHistory += gameLoopId -> move
+  }
+
+  def eraseHistory() = {
+    movesHistory = Map()
   }
 }

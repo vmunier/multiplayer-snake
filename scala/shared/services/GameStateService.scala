@@ -10,14 +10,14 @@ import shared.models.Block
 
 object GameStateService {
 
-  def changeSnakeMove(gameState: GameState, snakeMove: SnakeMove): GameState = changeSnakeMoves(gameState, Set(snakeMove))
-  def changeSnakeMoves(gameState: GameState, snakeMoves: Set[SnakeMove]): GameState = {
+  def changeSnakeMove(snakeMove: SnakeMove)(gameState: GameState): GameState = changeSnakeMoves(Set(snakeMove))(gameState)
+  def changeSnakeMoves(snakeMoves: Set[SnakeMove])(gameState: GameState): GameState = {
     gameState.copy(snakes =
       gameState.snakes.mergeAliveSnakes(changeSnakeMoves(snakeMoves, gameState.snakes.aliveMap).toSeq))
   }
 
-  def addNewFood(gameState: GameState, food: Block): GameState = addNewFoods(gameState, Set(food))
-  def addNewFoods(gameState: GameState, foods: Set[Block]): GameState = {
+  def addNewFood(food: Block)(gameState: GameState): GameState = addNewFoods(Set(food))(gameState)
+  def addNewFoods(foods: Set[Block])(gameState: GameState): GameState = {
     gameState.copy(foods =
       gameState.foods.copy(available = gameState.foods.available ++ foods))
   }

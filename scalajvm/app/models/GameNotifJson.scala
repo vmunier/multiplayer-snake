@@ -42,8 +42,8 @@ object GameNotifJsonImplicits {
   }
 
   implicit val gameLoopIdReads = new Reads[GameLoopId] {
-    override def reads(gameLoopId: JsValue): JsResult[GameLoopId] = gameLoopId.asOpt[Long].map(id => JsSuccess(new GameLoopId(id)))
-      .getOrElse(JsError(s"A GameLoopId should be a long"))
+    override def reads(gameLoopId: JsValue): JsResult[GameLoopId] = gameLoopId.asOpt[Int].map(id => JsSuccess(new GameLoopId(id)))
+      .getOrElse(JsError(s"A GameLoopId should be an integer"))
   }
 
   implicit val positionFormat = Json.format[Position]
