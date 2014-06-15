@@ -35,5 +35,5 @@
 
   gameSocket.onmessage = receiveEvent;
 
-  Game().main(gameSocket);
+  window.game.setGameSocket(gameSocket);
 })();

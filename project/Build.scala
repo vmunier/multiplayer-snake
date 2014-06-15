@@ -1,10 +1,13 @@
 import sbt._
 import Keys._
-import play.Keys._
 import scala.scalajs.sbtplugin.ScalaJSPlugin._
 import ScalaJSKeys._
 import com.typesafe.sbt.packager.universal.UniversalKeys
 import com.typesafe.sbteclipse.core.EclipsePlugin.EclipseKeys
+import com.typesafe.sbt.web.SbtWeb.autoImport._
+import com.typesafe.sbt.less.SbtLess.autoImport._
+import play.Play.autoImport._
+import PlayKeys._
 
 object ApplicationBuild extends Build with UniversalKeys {
 
@@ -14,10 +17,10 @@ object ApplicationBuild extends Build with UniversalKeys {
 
   val sharedSrcDir = "scala"
 
-  lazy val scalajvm = play.Project(
-    name = "scalajvm",
-    path = file("scalajvm")
-  ) settings (scalajvmSettings: _*) aggregate (scalajs)
+  lazy val scalajvm = Project(
+    id = "scalajvm",
+    base = file("scalajvm")
+  ) enablePlugins (play.PlayScala) settings (scalajvmSettings: _*) aggregate (scalajs)
 
   lazy val scalajs = Project(
     id   = "scalajs",
@@ -27,21 +30,24 @@ object ApplicationBuild extends Build with UniversalKeys {
   lazy val sharedScala = Project(
     id = "sharedScala",
     base = file(sharedSrcDir)
-  ) settings(sharedScalaSettings: _*)
+  ) settings (sharedScalaSettings: _*)
 
   lazy val scalajvmSettings =
-    play.Project.playScalaSettings ++ Seq(
-      name                 := "play-game",
-      version              := "0.1.0-SNAPSHOT",
-      scalajsOutputDir     := (crossTarget in Compile).value / "classes" / "public" / "javascripts",
-      compile in Compile <<= (compile in Compile) dependsOn (preoptimizeJS in (scalajs, Compile)),
-      dist <<= dist dependsOn (optimizeJS in (scalajs, Compile)),
+    Seq(
+      name := "play-game",
+      version := Versions.app,
+      scalaVersion := Versions.scala,
+      scalajsOutputDir := (crossTarget in Compile).value / "classes" / "public" / "javascripts",
+      compile in Compile <<= (compile in Compile) dependsOn (fastOptJS in (scalajs, Compile)),
+      dist <<= dist dependsOn (fullOptJS in (scalajs, Compile)),
       addSharedSrcSetting,
-      libraryDependencies ++= Seq(),
+      libraryDependencies ++= Dependencies.scalajvm,
+      includeFilter in (Assets, LessKeys.less) := "*.less",
+      excludeFilter in (Assets, LessKeys.less) := "_*.less",
       EclipseKeys.skipParents in ThisBuild := false
     ) ++ (
       // ask scalajs project to put its outputs in scalajsOutputDir
-      Seq(packageExternalDepsJS, packageInternalDepsJS, packageExportedProductsJS, preoptimizeJS, optimizeJS) map { packageJSKey =>
+      Seq(packageExternalDepsJS, packageInternalDepsJS, packageExportedProductsJS, packageLauncher, fastOptJS, fullOptJS) map { packageJSKey =>
         crossTarget in (scalajs, Compile, packageJSKey) := scalajsOutputDir.value
       }
     )
@@ -49,11 +55,11 @@ object ApplicationBuild extends Build with UniversalKeys {
   lazy val scalajsSettings =
     scalaJSSettings ++ Seq(
       name := "scalajs-game",
-      version := "0.1.0-SNAPSHOT",
-      libraryDependencies ++= Seq(
-        "org.scala-lang.modules.scalajs" %% "scalajs-jasmine-test-framework" % scalaJSVersion % "test",
-        "org.scala-lang.modules.scalajs" %% "scalajs-dom" % "0.3"
-      ),
+      version := Versions.app,
+      scalaVersion := Versions.scala,
+      persistLauncher := true,
+      persistLauncher in Test := false,
+      libraryDependencies ++= Dependencies.scalajs,
       addSharedSrcSetting
     )
 
@@ -65,4 +71,22 @@ object ApplicationBuild extends Build with UniversalKeys {
     )
 
   lazy val addSharedSrcSetting = unmanagedSourceDirectories in Compile += new File((baseDirectory.value / ".." / sharedSrcDir).getCanonicalPath)
+}
+
+object Dependencies {
+  val scalajvm = Seq(
+    "org.webjars" %% "webjars-play" % "2.3.0",
+    "org.webjars" % "jquery" % "1.7.2"
+  )
+
+  val scalajs = Seq(
+    "org.scala-lang.modules.scalajs" %%% "scalajs-dom" % Versions.scalajsDom,
+    "org.scala-lang.modules.scalajs" %% "scalajs-jasmine-test-framework" % scalaJSVersion % "test"
+  )
+}
+
+object Versions {
+  val app = "0.1.0-SNAPSHOT"
+  val scala = "2.11.1"
+  val scalajsDom = "0.6"
 }

@@ -7,7 +7,6 @@ import scala.scalajs.js.Any.fromInt
 import scala.scalajs.js.Any.fromString
 import scala.scalajs.js.Dynamic.{global => g}
 import scala.scalajs.js.Number.toDouble
-import scala.scalajs.js.annotation.JSExport
 
 import org.scalajs.dom.WebSocket
 
@@ -54,8 +53,7 @@ trait GameVars extends PlayerSnakeIdAccess {
   def getSavedGameState = _savedGameState
 }
 
-@JSExport
-object Game extends GameVars with GamePrediction {
+object Game extends js.JSApp with GameVars with GamePrediction {
 
   override val callOnTick: () => Unit = () => {
     val changeSnakeMove = GameStateService.changeSnakeMove(SnakeMove(playerSnakeId, lastMove)) _
@@ -135,26 +133,23 @@ object Game extends GameVars with GamePrediction {
         snakes = gameState.snakes.addDeadSnakeIds(new SnakeId(notif.disconnectedSnakeId)))
       saveGameState(gameState)
     }
+
+    g.window.game.setGameSocket = (socket: WebSocket) => {
+      gameSocket = socket
+    }
   }
   initJsInterfaces()
 
-  def sendMove(gameSocket: WebSocket, move: Move): Unit = {
+  def sendMove(move: Move): Unit = {
     gameSocket.send(s"""{"move": "${move.name}"}""")
   }
 
-  @JSExport
-  def main(gameSocket: WebSocket): Unit = {
+  def main(): Unit = {
     val keyboard = new Keyboard()
     keyboard.registerEventListeners()
 
     keyboard.onMove { move =>
-      sendMove(gameSocket, move)
-      for {
-        snake <- gameState.snakes.aliveMap.get(playerSnakeId)
-        if MoveService.isValidMove(snake, move)
-      } {
-        lastMove = move
-      }
+      nextMove = move
     }
   }
 }
