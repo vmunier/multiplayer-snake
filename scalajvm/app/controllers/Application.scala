@@ -3,22 +3,18 @@ package controllers
 import java.util.UUID
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
-import scala.concurrent.duration._
 import actors.ConnectionsActor
 import models.Game
-import models.GameNotifJsonImplicits._
+import shared.models.GameNotifJsonImplicits._
+import models.ClientNotif._
 import shared.models.IdTypes.GameId
-import play.api._
-import play.api.libs.iteratee.Done
 import play.api.libs.iteratee.Enumerator
-import play.api.libs.iteratee.Input
 import play.api.libs.iteratee.Iteratee
 import play.api.libs.json.JsValue
 import play.api.libs.json.Json
 import play.api.mvc._
-import shared.models.Moves._
 import models.ClientNotif
-import shared.models.PlayerSnakeIdNotif
+import shared.models.{GameNotif, PlayerSnakeIdNotif}
 import play.api.data._
 import play.api.data.Forms._
 import play.api.libs.iteratee.Enumeratee
@@ -30,6 +26,7 @@ object Application extends Controller {
   }
 
   case class Test(s: Set[Int])
+
   def test() = Action {
     import play.api.libs.json._
 
@@ -44,18 +41,14 @@ object Application extends Controller {
     }
   }
 
-  val createGameForm = Form(
-    single(
-      "gameName" -> nonEmptyText))
+  val createGameForm = Form(single("gameName" -> nonEmptyText))
 
   def createGame = Action.async { implicit request =>
-    def create(gameName: String): Future[SimpleResult] = ConnectionsActor.createGame(gameName).map { game =>
+    def create(gameName: String): Future[Result] = ConnectionsActor.createGame(gameName).map { game =>
       Redirect(routes.Application.game(game.gameId.id, Some(game.creatorUUID)))
     }
 
-    createGameForm.bindFromRequest.fold(
-      errors => Future(BadRequest(errors.errorsAsJson)),
-      gameName => create(gameName))
+    createGameForm.bindFromRequest.fold(errors => Future(BadRequest(errors.errorsAsJson)), gameName => create(gameName))
   }
 
   def startGame(gameUUID: UUID, creatorUUID: UUID) = Action.async { request =>
@@ -78,8 +71,8 @@ object Application extends Controller {
     }
   }
 
-  def joinGame(uuid: UUID, maybeCreatorUUID: Option[UUID]) = WebSocket.async[JsValue] { request =>
-    withGameWS(uuid) { game =>
+  def joinGame(uuid: UUID, maybeCreatorUUID: Option[UUID]) = WebSocket.tryAccept { request =>
+    tryWithGame(uuid) { game =>
       game.join.map { snakeId =>
         val iteratee = Iteratee.foreach[JsValue] { event =>
           Json.fromJson[ClientNotif](event).map { clientNotif =>
@@ -94,8 +87,8 @@ object Application extends Controller {
           }
         }
 
-        val playerSnakeIdEnum = Enumerator(Json.toJson(PlayerSnakeIdNotif(snakeId)))
-        (iteratee, playerSnakeIdEnum.andThen(game.notifsEnumerator).through(Enumeratee.onIterateeDone(onDone)))
+        val playerSnakeIdEnum: Enumerator[GameNotif] = Enumerator(PlayerSnakeIdNotif(snakeId))
+        (iteratee, playerSnakeIdEnum.andThen(game.notifsEnumerator).map(_.toJson).through(Enumeratee.onIterateeDone(onDone)))
       }
     }
   }
@@ -104,26 +97,20 @@ object Application extends Controller {
     Ok(views.js.game(gameUUID, maybeCreatorUUID))
   }
 
-  private def withGameWS(uuid: UUID)(interfaces: Game => Future[(Iteratee[JsValue, _], Enumerator[JsValue])]): Future[(Iteratee[JsValue, _], Enumerator[JsValue])] = {
+  private def tryWithGame[A](uuid: UUID)(action: Game => Future[(Iteratee[JsValue, _], Enumerator[JsValue])]): Future[Either[Result, (Iteratee[JsValue, _], Enumerator[JsValue])]] = {
     ConnectionsActor.getGame(new GameId(uuid)).flatMap { maybeGame =>
-      maybeGame.map { game =>
-        interfaces(game)
-      }.getOrElse {
-        // A finished Iteratee sending EOF
-        val iteratee = Done[JsValue, Unit]((), Input.EOF)
-        // Send an error and close the socket
-        val enumerator = Enumerator[JsValue](Json.obj("error" -> s"Game $uuid does not exist")).andThen(Enumerator.enumInput(Input.EOF))
-        Future((iteratee, enumerator))
+      maybeGame match {
+        case Some(game) => action(game).map(Right(_))
+        case None => Future(Left(NotFound(s"Game $uuid does not exist")))
       }
     }
   }
 
-  private def withGame(uuid: UUID)(action: Game => SimpleResult): Future[SimpleResult] = {
+  private def withGame(uuid: UUID)(action: Game => Result): Future[Result] = {
     ConnectionsActor.getGame(new GameId(uuid)).map { maybeGame =>
       maybeGame.map { game =>
         action(game)
       }.getOrElse(NotFound(s"Game $uuid does not exist"))
     }
   }
-
 }

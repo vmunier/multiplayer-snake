@@ -22,6 +22,11 @@ object GameStateService {
       gameState.foods.copy(available = gameState.foods.available ++ foods))
   }
 
+  def removeDeadSnake(deadSnakeId: SnakeId)(gameState: GameState): GameState = removeDeadSnakes(Set(deadSnakeId))(gameState)
+  def removeDeadSnakes(deadSnakeIds: Set[SnakeId])(gameState: GameState): GameState = {
+    gameState.copy(snakes = gameState.snakes.addDeadSnakeIds(deadSnakeIds.toSeq: _*))
+  }
+
   private def changeSnakeMoves(snakeMoves: Set[SnakeMove], aliveSnakesMap: Map[SnakeId, Snake]): Set[Snake] = {
     for {
       snakeMove <- snakeMoves

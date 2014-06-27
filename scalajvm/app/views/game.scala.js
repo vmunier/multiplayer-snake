@@ -18,9 +18,7 @@
   }
   var receiveEvent = function(event) {
     var data = JSON.parse(event.data);
-    if(data.error) {
-      gameSocket.close();
-    } else if (data.notifType == "gameInit") {
+    if (data.notifType == "gameInit") {
       window.game.receiveGameInitNotif(data);
     } else if (data.notifType == "playerSnakeId") {
       window.game.receivePlayerSnakeId(data);

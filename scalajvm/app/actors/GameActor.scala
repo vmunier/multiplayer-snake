@@ -7,30 +7,31 @@ import scala.concurrent.duration.DurationInt
 import akka.actor.Actor
 import akka.actor.Cancellable
 import akka.actor.actorRef2Scala
-import models.GameNotifJsonImplicits.disconnectedSnakeNotif
-import models.GameNotifJsonImplicits.gameInitNotifFormat
-import models.GameNotifJsonImplicits.gameLoopNotifFormat
-import models.GameNotifJsonImplicits.heartbeatFormat
+import shared.models.GameNotifJsonImplicits.disconnectedSnakeNotif
+import shared.models.GameNotifJsonImplicits.gameInitNotifFormat
+import shared.models.GameNotifJsonImplicits.gameLoopNotifFormat
+import shared.models.GameNotifJsonImplicits.heartbeatFormat
 import play.api.Play.current
 import play.api.libs.concurrent.Akka
 import play.api.libs.iteratee.Concurrent.Channel
 import play.api.libs.json.JsValue
 import play.api.libs.json.Json
-import shared.models.DisconnectedSnakeNotif
+import shared.models._
 import shared.models.GameConstants._
-import shared.models.GameInitNotif
-import shared.models.GameLoopNotif
-import shared.models.GameState
-import shared.models.Heartbeat
 import shared.models.IdTypes._
 import shared.models.Moves.Move
-import shared.models.Position
-import shared.models.Snake
-import shared.models.SnakeMove
 import shared.services.BlockService
 import shared.services.MoveService
 import shared.services.TurnService
 import shared.services.GameStateService
+import shared.models.Position
+import shared.models.SnakeMove
+import shared.models.GameState
+import shared.models.DisconnectedSnakeNotif
+import shared.models.Snake
+import shared.models.Heartbeat
+import shared.models.GameLoopNotif
+import shared.models.GameInitNotif
 
 object GameActor {
   case class MoveSnake(snakeId: SnakeId, move: Move)
@@ -45,7 +46,7 @@ object GameActor {
 
 trait StartedGame {
   def started: Actor.Receive
-  def notifsChannel: Channel[JsValue]
+  def notifsChannel: Channel[GameNotif]
 }
 
 trait GameConnections { actor: Actor with StartedGame =>
@@ -54,7 +55,7 @@ trait GameConnections { actor: Actor with StartedGame =>
   var gameState = GameState()
 
   val heartbeatScheduler = Akka.system.scheduler.schedule(0.milliseconds, HeartbeatInterval) {
-    notifsChannel.push(Json.toJson(Heartbeat()))
+    notifsChannel.push(Heartbeat())
   }
 
   override def receive: Actor.Receive = {
@@ -89,7 +90,7 @@ trait GameConnections { actor: Actor with StartedGame =>
       }
 
       val gameInitNotif = GameInitNotif(gameState.snakes.all)
-      notifsChannel.push(Json.toJson(gameInitNotif))
+      notifsChannel.push(gameInitNotif)
       startedPromise.success(true)
     }
   }
@@ -110,12 +111,12 @@ trait GameConnections { actor: Actor with StartedGame =>
   }
 
   def onDisconnectSnake(snakeId: SnakeId) {
-    notifsChannel.push(Json.toJson(DisconnectedSnakeNotif(snakeId)))
+    notifsChannel.push(DisconnectedSnakeNotif(snakeId))
     gameState = gameState.copy(snakes = gameState.snakes.addDeadSnakeIds(snakeId))
   }
 }
 
-class GameActor(override val notifsChannel: Channel[JsValue]) extends Actor with StartedGame with GameConnections {
+class GameActor(override val notifsChannel: Channel[GameNotif]) extends Actor with StartedGame with GameConnections {
   import GameActor._
 
   var nextGameNotif = GameLoopNotif()
@@ -141,16 +142,16 @@ class GameActor(override val notifsChannel: Channel[JsValue]) extends Actor with
   }
 
   var i = 0
-  def loseGameTicks() {
+  def loseGameTicks(): Boolean = {
     i += 1
     if (i == 20) {
       println("stop onGameTick")
     }
-    if (i > 20 && i < 30)
-      return;
     if (i == 30) {
       println("return back")
     }
+
+    i > 20 && i < 30
   }
 
   def maySleep() {
@@ -162,21 +163,32 @@ class GameActor(override val notifsChannel: Channel[JsValue]) extends Actor with
 
   def onGameTick() {
     // prediction tests:
-    //loseGameTicks()
+//    if (loseGameTicks()) {
+//      return
+//    }
     //maySleep()
-    gameState = GameStateService.changeSnakeMoves(nextGameNotif.snakes)(gameState)
-    gameState = TurnService.afterTurn(gameState)
+    val newGameState = (GameStateService.changeSnakeMoves(nextGameNotif.snakeMoves) _ andThen TurnService.afterTurn _)(gameState)
+
+    addDeadSnakesToNotif(gameState, newGameState)
+
+    gameState = newGameState
 
     if (gameState.foods.available.isEmpty) {
-      addNewFood(availablePositions)
+     addNewFood(availablePositions)
     }
-
-    notifsChannel.push(Json.toJson(nextGameNotif))
+    if (!nextGameNotif.isEmpty) {
+      println(gameState)
+      notifsChannel.push(nextGameNotif)
+    }
     nextGameNotif = GameLoopNotif(new GameLoopId(nextGameNotif.gameLoopId + 1))
 
     if (gameState.snakes.alive.size <= 1) {
       stopAll()
     }
+  }
+
+  private def addDeadSnakesToNotif(prevGameState: GameState, newGameState: GameState) = {
+   nextGameNotif = nextGameNotif.copy(deadSnakes = prevGameState.snakes.alive.map(_.snakeId).diff(newGameState.snakes.alive.map(_.snakeId)).toSet)
   }
 
   private def stopAll() = {

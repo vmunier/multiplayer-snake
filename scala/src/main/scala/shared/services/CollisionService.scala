@@ -6,8 +6,8 @@ import shared.models.GameConstants
 
 object CollisionService extends SnakeServiceLayer {
 
-  def afterCollisions: GameSnakes => GameSnakes = {
-    afterTailCollisions _ compose afterHeadCollisions _
+  val afterCollisions: GameSnakes => GameSnakes = {
+    afterTailCollisions _ andThen afterHeadCollisions _
   }
 
   // anticipate collisions for single head snakes that would have crossed a snake without killing it.
@@ -31,7 +31,7 @@ object CollisionService extends SnakeServiceLayer {
   private def afterHeadCollisions(gameSnakes: GameSnakes): GameSnakes = {
     val deadSnakes = for {
       (headPos, crossedHeadSnakes) <- gameSnakes.alive.groupBy(_.head.pos)
-      if crossedHeadSnakes.size > 2
+      if crossedHeadSnakes.size >= 2
       snake <- crossedHeadSnakes
     } yield {
       snake

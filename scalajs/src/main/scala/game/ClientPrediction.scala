@@ -16,38 +16,25 @@ import shared.services.TurnService
 
 trait GamePrediction extends PlayerSnakeIdAccess {
 
-  def callOnTick: () => Unit
-  private var movesHistory = Map[GameLoopId, Move]()
+  private var _movesHistory = Map[GameLoopId, Move]()
 
-  def startGamePrediction() = {
-    dom.setInterval(callOnTick, GameTickInterval.toMillis).toInt
-  }
+  def movesHistory = _movesHistory
 
-  def reconcileWithServer(fromGameLoopId: GameLoopId, toGameLoopId: GameLoopId, fromGameState: GameState): GameState = {
-    var gameState = fromGameState
-
-    for (gameLoopId <- (fromGameLoopId.id to toGameLoopId.id).map(new GameLoopId(_))) {
-      for (snakeMove <- movesHistory.get(gameLoopId)) {
-        gameState = GameStateService.changeSnakeMove(SnakeMove(playerSnakeId, snakeMove))(gameState)
-      }
-      gameState = TurnService.afterTurn(gameState)
+  def removeGameLoopIds(gameLoopIds: Seq[GameLoopId]) = {
+    for (id <- gameLoopIds) {
+      _movesHistory -= id
     }
-    gameState
-  }
-
-  def removeGameLoopId(gameLoopId: GameLoopId) = {
-    movesHistory -= gameLoopId
   }
 
   def getMoveFromHistory(gameLoopId: GameLoopId): Option[Move] = {
-	movesHistory.get(gameLoopId)
+	_movesHistory.get(gameLoopId)
   }
 
   def registerPlayerMove(gameLoopId: GameLoopId, move: Move) = {
-    movesHistory += gameLoopId -> move
+    _movesHistory += gameLoopId -> move
   }
 
   def eraseHistory() = {
-    movesHistory = Map()
+    _movesHistory = Map()
   }
 }
