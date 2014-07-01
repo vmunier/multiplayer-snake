@@ -176,11 +176,12 @@ class GameActor(override val notifsChannel: Channel[GameNotif]) extends Actor wi
     if (gameState.foods.available.isEmpty) {
      addNewFood(availablePositions)
     }
+
+    nextGameNotif = GameLoopNotif(new GameLoopId(nextGameNotif.gameLoopId + 1))
     if (!nextGameNotif.isEmpty) {
       println(gameState)
       notifsChannel.push(nextGameNotif)
     }
-    nextGameNotif = GameLoopNotif(new GameLoopId(nextGameNotif.gameLoopId + 1))
 
     if (gameState.snakes.alive.size <= 1) {
       stopAll()

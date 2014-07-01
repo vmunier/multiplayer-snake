@@ -32,7 +32,6 @@ object GameLoopStateService {
     var gameState = serverState.gameState
 
     for (gameLoopId <- ((serverState.gameLoopId.id + 1) to clientGameLoopId.id).map(new GameLoopId(_))) {
-      println("Reconciling")
       for (snakeMove <- movesHistory.get(gameLoopId)) {
         gameState = GameStateService.changeSnakeMove(SnakeMove(playerSnakeId, snakeMove))(gameState)
       }

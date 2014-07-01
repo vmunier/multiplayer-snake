@@ -7,7 +7,9 @@ import shared.models.{SnakeMove, Position, GameLoopNotif}
 import scala.scalajs.test.JasmineTest
 
 
-object ClientGameTest extends JasmineTest with BaseGameTest {
+object ClientGameTest extends BaseGameTest {
+
+  val NbTicks = 5
 
   describe("A snake") {
     it("should move properly after a client tick") {
@@ -27,8 +29,8 @@ object ClientGameTest extends JasmineTest with BaseGameTest {
       val nextMove = Down
 
       val numTickWhenToChangeMove = 4
-      for (numTick <- 1 to 8) {
-        if (numTick ==numTickWhenToChangeMove) {
+      for (numTick <- 1 to NbTicks) {
+        if (numTick == numTickWhenToChangeMove) {
           game.nextMove = nextMove
 
         }
@@ -39,7 +41,29 @@ object ClientGameTest extends JasmineTest with BaseGameTest {
       game.onGameLoopNotif(GameLoopNotif(new GameLoopId(numTickWhenToChangeMove), snakeMoves = Set(SnakeMove(playerSnake.snakeId, nextMove))))
       assert(savedClientState == game.clientState)
     }
+
+    it("should take place when the client state diverges from the server state") {
+      game.clientState = firstLoopState
+      game.serverState = firstLoopState
+
+      val nextMove = Down
+      val numTickWhenToChangeMove = 4
+      for (numTick <- 1 to NbTicks) {
+        if (numTick == numTickWhenToChangeMove) {
+          game.nextMove = nextMove
+        }
+        game.onGameTick
+      }
+
+      val savedClientState = game.clientState
+      val serverNotifId = new GameLoopId(2)
+      val nbCorrectClientMoves = serverNotifId - 1
+      game.onGameLoopNotif(GameLoopNotif(serverNotifId, snakeMoves = Set(SnakeMove(otherSnake.snakeId, Down))))
+
+      val expectedOtherSnakePos = Position(otherSnake.head.pos.x + nbCorrectClientMoves, otherSnake.head.pos.y + NbTicks - nbCorrectClientMoves)
+      assert(savedClientState != game.clientState)
+      assert(getSnakeFromState(savedClientState, playerSnake.snakeId) == getSnakeFromState(game.clientState, playerSnake.snakeId))
+      assert(getSnakeFromState(game.clientState, otherSnake.snakeId).get.head.pos == expectedOtherSnakePos)
+    }
   }
 }
-
-

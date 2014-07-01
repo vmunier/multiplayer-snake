@@ -11,6 +11,7 @@ object IdTypes {
     override def toString = id.toString
   }
 
+  /* GameLoopId is one based. GameLoopId=NbTotalMoves from the game start. When GameLoopId=0, no game tick has been triggered */
   class GameLoopId(val id: Int) extends AnyVal {
     override def toString = id.toString
   }

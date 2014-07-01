@@ -30,6 +30,7 @@ trait GamePrediction extends PlayerSnakeIdAccess {
 	_movesHistory.get(gameLoopId)
   }
 
+  /* when a Down move is registered with gameLoopId=1, it means that the first move was Down: the snake has moved down from gameLoopId=0  */
   def registerPlayerMove(gameLoopId: GameLoopId, move: Move) = {
     _movesHistory += gameLoopId -> move
   }

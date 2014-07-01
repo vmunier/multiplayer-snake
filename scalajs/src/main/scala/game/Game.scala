@@ -66,20 +66,10 @@ class Game extends GameVars with GamePrediction {
   def onGameLoopNotif(serverLoopNotif: GameLoopNotif) = {
     val prevServerGameLoopId = serverState.gameLoopId
     serverState = GameLoopStateService.applyGameLoopNotif(serverState, serverLoopNotif)
-    val isClientStateValid = //clientState.gameLoopId > serverState.gameLoopId &&
-      super.getMoveFromHistory(serverState.gameLoopId) == serverState.gameState.getMove(playerSnakeId)
 
-    println("client valid if "+super.getMoveFromHistory(serverState.gameLoopId)+"=="+serverState.gameState.getMove(playerSnakeId))
-    println("isClientStateValid (" + (clientState.gameLoopId > serverState.gameLoopId) + ") (" + (super.getMoveFromHistory(serverState.gameLoopId) == serverState.gameState.getMove(playerSnakeId)) + ")")
-
-    if (isClientStateValid) {
-      val clientGameState = reconcileWithServer(serverState, clientState.gameLoopId, movesHistory)
-      clientState = clientState.copy(gameState = clientGameState)
-      super.removeGameLoopIds((prevServerGameLoopId.id to serverState.gameLoopId.id).map(new GameLoopId(_)))
-    } else {
-      clientState = serverState
-      eraseHistory()
-    }
+    val clientGameState = reconcileWithServer(serverState, clientState.gameLoopId, movesHistory)
+    clientState = clientState.copy(gameState = clientGameState)
+    super.removeGameLoopIds((prevServerGameLoopId.id to serverState.gameLoopId.id).map(new GameLoopId(_)))
   }
 
   def killSnake(snakeId: SnakeId) = {
