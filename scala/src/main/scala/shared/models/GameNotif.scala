@@ -27,6 +27,8 @@ case class GameLoopNotif(gameLoopId: GameLoopId = new GameLoopId(0), foods: Set[
     copy(snakeMoves = uniqueSnakeMoves.toSet)
   }
 
+  def incGameLoopId: GameLoopNotif = copy(gameLoopId = new GameLoopId(gameLoopId.id + 1))
+
   def toJson = Json.toJson(this)
 }
 
