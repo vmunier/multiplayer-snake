@@ -7,16 +7,9 @@ import scala.concurrent.duration.DurationInt
 import akka.actor.Actor
 import akka.actor.Cancellable
 import akka.actor.actorRef2Scala
-import shared.models.GameNotifJsonImplicits.disconnectedSnakeNotif
-import shared.models.GameNotifJsonImplicits.gameInitNotifFormat
-import shared.models.GameNotifJsonImplicits.gameLoopNotifFormat
-import shared.models.GameNotifJsonImplicits.heartbeatFormat
 import play.api.Play.current
 import play.api.libs.concurrent.Akka
 import play.api.libs.iteratee.Concurrent.Channel
-import play.api.libs.json.JsValue
-import play.api.libs.json.Json
-import shared.models._
 import shared.models.GameConstants._
 import shared.models.IdTypes._
 import shared.models.Moves.Move
@@ -141,32 +134,7 @@ class GameActor(override val notifsChannel: Channel[GameNotif]) extends Actor wi
     }
   }
 
-  var i = 0
-  def loseGameTicks(): Boolean = {
-    i += 1
-    if (i == 20) {
-      println("stop onGameTick")
-    }
-    if (i == 30) {
-      println("return back")
-    }
-
-    i > 20 && i < 30
-  }
-
-  def maySleep() {
-    if (Math.abs(scala.util.Random.nextInt) % 4 == 0) {
-      println("sleep 1 second")
-      Thread.sleep(1000)
-    }
-  }
-
   def onGameTick() {
-    // prediction tests:
-//    if (loseGameTicks()) {
-//      return
-//    }
-    //maySleep()
     val newGameState = (GameStateService.changeSnakeMoves(nextGameNotif.snakeMoves) _ andThen TurnService.afterTurn _)(gameState)
 
     addDeadSnakesToNotif(gameState, newGameState)
