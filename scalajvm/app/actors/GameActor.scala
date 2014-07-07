@@ -17,6 +17,7 @@ import shared.services.BlockService
 import shared.services.MoveService
 import shared.services.TurnService
 import shared.services.GameStateService
+import shared.models.GameNotif
 import shared.models.Position
 import shared.models.SnakeMove
 import shared.models.GameState
