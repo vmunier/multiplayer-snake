@@ -61,7 +61,8 @@ class Game extends GameVars with GamePrediction {
     }
   }
 
-  val reconcileWithServer = GameLoopStateService.reconcileWithServer(playerSnakeId) _
+  /* it's a def because it depends on playerSnakeId which has to be received from the server */
+  def reconcileWithServer = GameLoopStateService.reconcileWithServer(playerSnakeId) _
 
   def onGameLoopNotif(serverLoopNotif: GameLoopNotif) = {
     val prevServerGameLoopId = serverState.gameLoopId
@@ -82,7 +83,7 @@ class Game extends GameVars with GamePrediction {
     val clientGameState = clientState.gameState
     val gameSnakes = clientGameState.snakes
 
-    val playerNbEatenBlocks = (gameSnakes.allMap).get(playerSnakeId).map(_.nbEatenBlocks).getOrElse(0)
+    val playerNbEatenBlocks = gameSnakes.allMap.get(playerSnakeId).map(_.nbEatenBlocks).getOrElse(0)
     val blocks = gameSnakes.alive.flatMap(_.blocks) ++ clientGameState.foods.all
     val gameLost = gameSnakes.dead.exists(_.snakeId == playerSnakeId)
     val maybeSnakeHead = gameSnakes.aliveMap.get(playerSnakeId).map(_.head)
@@ -108,7 +109,7 @@ class Game extends GameVars with GamePrediction {
   def initJsInterfaces() = {
     g.window.game = new js.Object
     g.window.game.receiveGameInitNotif = (notif: JsGameInitNotif) => {
-      val canvas = Canvas.init()
+      Canvas.init()
       val gameInitNotif = GameNotifParser.parseGameInitNotif(notif)
       serverState = GameLoopState(GameState(snakes = GameSnakes(gameInitNotif.snakes)))
       clientState = serverState
@@ -118,11 +119,8 @@ class Game extends GameVars with GamePrediction {
         super.registerPlayerMove(serverState.gameLoopId, snakeMove)
       }
 
+      last = js.Date.now()
       renderLoop()
-
-      //      for (_ <- 1 to 20) {
-      //        callOnTick()
-      //      }
     }
 
     g.window.game.receiveGameLoopNotif = (x: JsGameLoopNotif) => onGameLoopNotif(GameNotifParser.parseGameLoopNotif(x))
