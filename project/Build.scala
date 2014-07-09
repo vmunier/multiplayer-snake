@@ -78,7 +78,6 @@ object ApplicationBuild extends Build with UniversalKeys {
     Seq(
       name := "shared-scala-game",
       scalaVersion := Versions.scala,
-      scalaSource in Compile := baseDirectory.value,
       EclipseKeys.skipProject := true,
       libraryDependencies ++= Dependencies.shared
     )
