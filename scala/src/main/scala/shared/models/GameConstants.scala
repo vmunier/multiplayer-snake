@@ -12,6 +12,7 @@ object GameConstants {
   val GameTickInterval: FiniteDuration = 100.milliseconds
   val NewFoodInterval: FiniteDuration = 3.seconds
   val HeartbeatInterval: FiniteDuration = 1.seconds
+  val WaitDurationBeforeRemovingGameIfNotStarted = 10.minutes
 
   val blockPositions =
     for {
