@@ -11,9 +11,9 @@ import exceptions.SnakeGameException
 import models.Game
 import shared.models.IdTypes.GameId
 import shared.models.IdTypes.SnakeId
+import shared.models.GameConstants.WaitDurationBeforeRemovingGameIfNotStarted
 import play.api.Play.current
 import play.api.libs.concurrent.Akka
-import scala.concurrent.duration._
 import scala.concurrent.ExecutionContext.Implicits.global
 
 object ConnectionsActor {
@@ -25,11 +25,10 @@ object ConnectionsActor {
   val connectionsActor = Akka.system.actorOf(Props[ConnectionsActor])
 
   def createGame(gameName: String): Future[Game] = {
-
     val gamePromise = Promise[Game]
     connectionsActor ! CreateGame(gameName, gamePromise)
     gamePromise.future.map { game =>
-      Akka.system.scheduler.scheduleOnce(10.minutes)(removeGame(game.gameId))
+      Akka.system.scheduler.scheduleOnce(WaitDurationBeforeRemovingGameIfNotStarted)(removeGame(game.gameId))
     }
     gamePromise.future
   }

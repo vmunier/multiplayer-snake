@@ -1,20 +1,19 @@
-package models
+package shared.models
 
-import shared.models.Block
+import play.api.libs.functional.syntax.functionalCanBuildApplicative
+import play.api.libs.functional.syntax.toFunctionalBuilderOps
+import play.api.libs.functional.syntax.toInvariantFunctorOps
+import play.api.libs.json.JsError
+import play.api.libs.json.JsResult
+import play.api.libs.json.JsSuccess
+import play.api.libs.json.JsValue
+import play.api.libs.json.Json
+import play.api.libs.json.Reads
+import play.api.libs.json.Writes
+import shared.models.IdTypes.GameLoopId
 import shared.models.IdTypes.SnakeId
-import shared.models.Moves._
-import play.api.libs.json._
-import shared.models.Position
-import shared.models.SnakeMove
-import shared.models.GameNotif
-import shared.models.GameLoopNotif
-import shared.models.GameInitNotif
-import shared.models.DisconnectedSnakeNotif
-import shared.models.Snake
-import shared.models.IdTypes._
-import shared.models.Moves
-import shared.models.PlayerSnakeIdNotif
-import shared.models.Heartbeat
+import shared.models.Moves.Move
+import shared.models.Moves.moves
 
 object GameNotifJsonImplicits {
 
@@ -37,6 +36,15 @@ object GameNotifJsonImplicits {
       .getOrElse(JsError(s"A SnakeId should be an integer"))
   }
 
+  implicit val gameLoopIdWrites = new Writes[GameLoopId] {
+    def writes(gameLoopId: GameLoopId): JsValue = Json.toJson(gameLoopId.id)
+  }
+
+  implicit val gameLoopIdReads = new Reads[GameLoopId] {
+    override def reads(gameLoopId: JsValue): JsResult[GameLoopId] = gameLoopId.asOpt[Int].map(id => JsSuccess(new GameLoopId(id)))
+      .getOrElse(JsError(s"A GameLoopId should be an integer"))
+  }
+
   implicit val positionFormat = Json.format[Position]
   implicit val blockFormat = Json.format[Block]
   implicit val snakeMoveFormat = Json.format[SnakeMove]
@@ -48,6 +56,5 @@ object GameNotifJsonImplicits {
   implicit val playerSnakeIdNotif = Json.format[PlayerSnakeIdNotif]
   implicit val disconnectedSnakeNotif = Json.format[DisconnectedSnakeNotif]
 
-  implicit val clientFormat = Json.format[ClientNotif]
   implicit val heartbeatFormat = Json.format[Heartbeat]
 }

@@ -5,7 +5,7 @@ import js.Dynamic.{ global => g }
 import org.scalajs.dom
 import org.scalajs.dom.extensions._
 import shared.models.Block
-import shared.models.Snake
+import shared.models.GameConstants._
 
 object Canvas {
   lazy val canvas = dom.document.createElement("canvas").cast[dom.HTMLCanvasElement]
@@ -14,10 +14,13 @@ object Canvas {
   // use a smaller inner window size value to prevent possible scrolling
   lazy val windowHeight = g.window.innerHeight * 0.98
   lazy val windowWidth = g.window.innerWidth * 0.98
+  lazy val blockSize = Math.min(
+    (windowHeight / NbBlocksInHeight).toInt,
+    (windowWidth / NbBlocksInWidth).toInt)
 
   def init() = {
-    canvas.width = Game.NbBlocksInWidth * Game.BlockSize
-    canvas.height = Game.NbBlocksInHeight * Game.BlockSize
+    canvas.width = NbBlocksInWidth * blockSize
+    canvas.height = NbBlocksInHeight * blockSize
 
     g.jQuery(".gameArea").empty().append(canvas)
     canvas
@@ -63,12 +66,12 @@ object Canvas {
   private def renderSnakeHead(block: Block) = {
     ctx.strokeStyle = "black"
     ctx.lineWidth = 2
-    ctx.strokeRect(block.pos.x * Game.BlockSize, block.pos.y * Game.BlockSize, Game.BlockSize, Game.BlockSize)
+    ctx.strokeRect(block.pos.x * blockSize, block.pos.y * blockSize, blockSize, blockSize)
   }
 
   private def renderBlocks(blocks: Seq[Block]) = {
     for (block <- blocks) {
-      renderBlock(block.pos.x * Game.BlockSize, block.pos.y * Game.BlockSize, Game.BlockSize, Game.BlockSize, block.style)
+      renderBlock(block.pos.x * blockSize, block.pos.y * blockSize, blockSize, blockSize, block.style)
     }
   }
 
@@ -76,6 +79,4 @@ object Canvas {
     ctx.fillStyle = style
     ctx.fillRect(x, y, width, height)
   }
-
-
 }
