@@ -1,21 +1,20 @@
 package models
 
-import scala.concurrent.Future
-import scala.concurrent.Promise
+import java.util.UUID
+
 import actors.GameActor
 import akka.actor.Props
 import play.api.Play.current
 import play.api.libs.concurrent.Akka
-import shared.models.Moves._
-import play.api.libs.iteratee.Concurrent
-import play.api.libs.iteratee.Enumerator
-import shared.models.IdTypes._
-import java.util.UUID
-import play.api.libs.json.JsValue
+import play.api.libs.iteratee.{Concurrent, Enumerator}
 import shared.models.GameNotif
+import shared.models.IdTypes._
+import shared.models.Moves._
+
+import scala.concurrent.{Future, Promise}
 
 case class Game(gameId: GameId, creatorUUID: UUID, name: String) {
-  import GameActor._
+  import actors.GameActor._
 
   private val (enumerator, channel) = Concurrent.broadcast[GameNotif]
   private val gameActorRef = Akka.system.actorOf(Props(new GameActor(channel)))

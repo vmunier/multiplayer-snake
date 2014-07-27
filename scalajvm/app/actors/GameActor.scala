@@ -146,7 +146,6 @@ class GameActor(override val notifsChannel: Channel[GameNotif]) extends Actor wi
 
     nextGameNotif = nextGameNotif.incGameLoopId
     if (!nextGameNotif.isEmpty) {
-      println(gameState)
       notifsChannel.push(nextGameNotif)
     }
     nextGameNotif = new GameLoopNotif(nextGameNotif.gameLoopId)
@@ -161,11 +160,11 @@ class GameActor(override val notifsChannel: Channel[GameNotif]) extends Actor wi
   }
 
   private def stopAll() = {
-    context.stop(self)
     for (schedulerPromise <- Seq(gameTickScheduler, newFoodScheduler)) {
       schedulerPromise.future.foreach(_.cancel())
     }
     notifsChannel.eofAndEnd()
+    context.stop(self)
   }
 
   def onDisposeNewFood() = {

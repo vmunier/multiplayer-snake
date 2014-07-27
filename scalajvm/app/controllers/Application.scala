@@ -78,7 +78,6 @@ object Application extends Controller {
           Json.fromJson[ClientNotif](event).map { clientNotif =>
             game.moveSnake(snakeId, clientNotif.move)
           }
-
         }.map { _ =>
           game.disconnectSnake(snakeId)
           maybeCreatorUUID.foreach { _ =>
@@ -96,7 +95,7 @@ object Application extends Controller {
     Ok(views.js.game(gameUUID, maybeCreatorUUID))
   }
 
-  private def tryWithGame[A](uuid: UUID)(action: Game => Future[(Iteratee[JsValue, _], Enumerator[JsValue])]): Future[Either[Result, (Iteratee[JsValue, _], Enumerator[JsValue])]] = ConnectionsActor.getGame(new GameId(uuid)).flatMap {
+  private def tryWithGame[A](uuid: UUID)(action: Game => Future[(Iteratee[JsValue, A], Enumerator[JsValue])]): Future[Either[Result, (Iteratee[JsValue, A], Enumerator[JsValue])]] = ConnectionsActor.getGame(new GameId(uuid)).flatMap {
     case Some(game) => action(game).map(Right(_))
     case None => Future(Left(NotFound(s"Game $uuid does not exist")))
   }

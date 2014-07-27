@@ -23,6 +23,7 @@
     } else if (data.notifType == "playerSnakeId") {
       window.game.receivePlayerSnakeId(data);
     } else if (data.notifType == "heartbeat") {
+      console.log("received heartbeat");
       // do nothing
     } else if (data.notifType == "disconnectedSnake") {
       window.game.receiveDisconnectedSnake(data);
