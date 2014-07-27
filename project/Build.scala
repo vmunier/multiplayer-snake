@@ -104,7 +104,7 @@ object ApplicationBuild extends Build with UniversalKeys {
 
 object Dependencies {
   val shared = Seq(
-    "com.typesafe.play" %% "play-json" % "2.3.0",
+    "com.typesafe.play" %% "play-json" % "2.3.2",
     "com.lihaoyi" %%% "utest" % "0.1.6"
   )
 
