@@ -1,23 +1,23 @@
 package controllers
 
 import java.util.UUID
+
+import actors.ConnectionsActor
+import models.ClientNotif._
+import models.{ClientNotif, Game}
+import play.api.data.Forms._
+import play.api.data._
+import play.api.libs.concurrent.Promise
+import play.api.libs.iteratee.{Enumerator, Iteratee}
+import play.api.libs.json.{JsValue, Json}
+import play.api.mvc._
+import shared.models.GameNotifJsonImplicits._
+import shared.models.IdTypes.GameId
+import shared.models.{GameNotif, Heartbeat, PlayerSnakeIdNotif}
+
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
-import actors.ConnectionsActor
-import models.Game
-import shared.models.GameNotifJsonImplicits._
-import models.ClientNotif._
-import shared.models.IdTypes.GameId
-import play.api.libs.iteratee.Enumerator
-import play.api.libs.iteratee.Iteratee
-import play.api.libs.json.JsValue
-import play.api.libs.json.Json
-import play.api.mvc._
-import models.ClientNotif
-import shared.models.{GameNotif, PlayerSnakeIdNotif}
-import play.api.data._
-import play.api.data.Forms._
-import play.api.libs.iteratee.Enumeratee
+import scala.concurrent.duration._
 
 object Application extends Controller {
 
@@ -78,17 +78,16 @@ object Application extends Controller {
           Json.fromJson[ClientNotif](event).map { clientNotif =>
             game.moveSnake(snakeId, clientNotif.move)
           }
-        }
-        def onDone(): Unit = {
+
+        }.map { _ =>
           game.disconnectSnake(snakeId)
           maybeCreatorUUID.foreach { _ =>
             ConnectionsActor.removeGame(game.gameId)
             game.stopIfNotStarted()
           }
         }
-
         val playerSnakeIdEnum: Enumerator[GameNotif] = Enumerator(PlayerSnakeIdNotif(snakeId))
-        (iteratee, playerSnakeIdEnum.andThen(game.notifsEnumerator).map(_.toJson).through(Enumeratee.onIterateeDone(onDone)))
+        (iteratee, playerSnakeIdEnum.andThen(game.notifsEnumerator).map(_.toJson))
       }
     }
   }
@@ -97,13 +96,9 @@ object Application extends Controller {
     Ok(views.js.game(gameUUID, maybeCreatorUUID))
   }
 
-  private def tryWithGame[A](uuid: UUID)(action: Game => Future[(Iteratee[JsValue, _], Enumerator[JsValue])]): Future[Either[Result, (Iteratee[JsValue, _], Enumerator[JsValue])]] = {
-    ConnectionsActor.getGame(new GameId(uuid)).flatMap { maybeGame =>
-      maybeGame match {
-        case Some(game) => action(game).map(Right(_))
-        case None => Future(Left(NotFound(s"Game $uuid does not exist")))
-      }
-    }
+  private def tryWithGame[A](uuid: UUID)(action: Game => Future[(Iteratee[JsValue, _], Enumerator[JsValue])]): Future[Either[Result, (Iteratee[JsValue, _], Enumerator[JsValue])]] = ConnectionsActor.getGame(new GameId(uuid)).flatMap {
+    case Some(game) => action(game).map(Right(_))
+    case None => Future(Left(NotFound(s"Game $uuid does not exist")))
   }
 
   private def withGame(uuid: UUID)(action: Game => Result): Future[Result] = {

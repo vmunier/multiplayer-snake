@@ -130,8 +130,8 @@ class Game extends GameVars with GamePrediction {
     }
 
     g.window.game.receiveDisconnectedSnake = (notif: JsDisconnectedSnakeNotif) => {
-      clientState.copy(gameState =
-        GameStateService.removeDeadSnake(new SnakeId(notif.disconnectedSnakeId))(clientState.gameState))
+      clientState = clientState.copy(gameState = GameStateService.removeDeadSnake(new SnakeId(notif.disconnectedSnakeId))(clientState.gameState))
+      serverState = serverState.copy(gameState = GameStateService.removeDeadSnake(new SnakeId(notif.disconnectedSnakeId))(serverState.gameState))
     }
 
     g.window.game.setGameSocket = (socket: WebSocket) => {

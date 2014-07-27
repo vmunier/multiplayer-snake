@@ -1,5 +1,7 @@
 package actors
 
+import shared.services.{TurnService, GameStateService, MoveService, BlockService}
+
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Promise
 import scala.concurrent.duration.DurationInt
@@ -13,10 +15,6 @@ import play.api.libs.iteratee.Concurrent.Channel
 import shared.models.GameConstants._
 import shared.models.IdTypes._
 import shared.models.Moves.Move
-import shared.services.BlockService
-import shared.services.MoveService
-import shared.services.TurnService
-import shared.services.GameStateService
 import shared.models.GameNotif
 import shared.models.Position
 import shared.models.SnakeMove
