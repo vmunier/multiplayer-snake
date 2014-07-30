@@ -145,7 +145,8 @@ class GameActor(override val notifsChannel: Channel[GameNotif]) extends Actor wi
     }
 
     nextGameNotif = nextGameNotif.incGameLoopId
-    if (!nextGameNotif.isEmpty) {
+
+    if (!nextGameNotif.isEmpty || PushForced.isPushForced(nextGameNotif.gameLoopId)) {
       notifsChannel.push(nextGameNotif)
     }
     nextGameNotif = new GameLoopNotif(nextGameNotif.gameLoopId)
@@ -185,5 +186,17 @@ class GameActor(override val notifsChannel: Channel[GameNotif]) extends Actor wi
   def availablePositions: IndexedSeq[Position] = {
     val reservedBlocks = gameState.snakes.alive.flatMap(_.blocks).toSeq ++ gameState.foods.all
     blockPositions.diff(reservedBlocks.map(_.pos))
+  }
+}
+
+object PushForced {
+  var lastPushGameLoopId = 0
+
+  def isPushForced(gameLoopId: GameLoopId): Boolean = {
+    val pushForced = (gameLoopId - lastPushGameLoopId) % PushForceEveryNbGameLoops == 0
+    if (pushForced) {
+      lastPushGameLoopId = gameLoopId
+    }
+    pushForced
   }
 }

@@ -1,5 +1,4 @@
 package shared.models
-import scala.concurrent.duration.FiniteDuration
 import scala.concurrent.duration._
 
 object GameConstants {
@@ -13,6 +12,8 @@ object GameConstants {
   val NewFoodInterval: FiniteDuration = 3.seconds
   val HeartbeatInterval: FiniteDuration = 1.seconds
   val WaitDurationBeforeRemovingGameIfNotStarted = 10.minutes
+
+  val PushForceEveryNbGameLoops = 20
 
   val blockPositions =
     for {
