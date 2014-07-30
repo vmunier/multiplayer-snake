@@ -1,12 +1,6 @@
 package shared.services
-import shared.models.Moves._
-import shared.models.GameState
-import shared.models.Snake
 import shared.models.IdTypes.SnakeId
-import shared.models.SnakeMove
-import shared.models.SnakeMove
-import shared.models.SnakeMove
-import shared.models.Block
+import shared.models.{Block, GameState, Snake, SnakeMove}
 
 object GameStateService {
 

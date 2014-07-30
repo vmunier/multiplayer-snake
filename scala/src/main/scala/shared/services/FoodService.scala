@@ -1,7 +1,6 @@
 package shared.services
 
-import shared.models.Snake
-import shared.models.GameFoods
+import shared.models.{GameFoods, Snake}
 
 object FoodService {
   def eatAndDigested = Function.untupled(

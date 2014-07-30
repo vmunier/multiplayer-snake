@@ -1,11 +1,9 @@
 package shared.models
 
-import IdTypes.SnakeId
-import IdTypes.GameLoopId
-import Moves.Move
-import play.api.libs.json.Json
-import play.api.libs.json.JsValue
+import play.api.libs.json.{JsValue, Json}
 import shared.models.GameNotifJsonImplicits._
+import shared.models.IdTypes.{GameLoopId, SnakeId}
+import shared.models.Moves.Move
 
 case class SnakeMove(snakeId: SnakeId, move: Move)
 

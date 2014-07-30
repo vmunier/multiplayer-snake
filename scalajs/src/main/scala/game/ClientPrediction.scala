@@ -1,18 +1,7 @@
 package game
 
-import scala.scalajs.js.Any.fromFunction0
-import scala.scalajs.js.Any.fromLong
-import scala.scalajs.js.Number.toDouble
-
-import org.scalajs.dom
-
-import shared.models.GameConstants.GameTickInterval
-import shared.models.GameState
 import shared.models.IdTypes.GameLoopId
 import shared.models.Moves.Move
-import shared.models.SnakeMove
-import shared.services.GameStateService
-import shared.services.TurnService
 
 trait GamePrediction extends PlayerSnakeIdAccess {
 

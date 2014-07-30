@@ -1,14 +1,10 @@
 package services
 
-import shared.services.GameStateService
-import shared.models.GameLoopNotif
-import shared.models.IdTypes.GameLoopId
-import shared.models.IdTypes.SnakeId
 import models.GameLoopState
-import shared.services.TurnService
-import shared.models.SnakeMove
+import shared.models.IdTypes.{GameLoopId, SnakeId}
 import shared.models.Moves.Move
-import shared.models.GameState
+import shared.models.{GameLoopNotif, GameState, SnakeMove}
+import shared.services.{GameStateService, TurnService}
 
 object GameLoopStateService {
 

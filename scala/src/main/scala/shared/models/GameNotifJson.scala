@@ -1,19 +1,8 @@
 package shared.models
 
-import play.api.libs.functional.syntax.functionalCanBuildApplicative
-import play.api.libs.functional.syntax.toFunctionalBuilderOps
-import play.api.libs.functional.syntax.toInvariantFunctorOps
-import play.api.libs.json.JsError
-import play.api.libs.json.JsResult
-import play.api.libs.json.JsSuccess
-import play.api.libs.json.JsValue
-import play.api.libs.json.Json
-import play.api.libs.json.Reads
-import play.api.libs.json.Writes
-import shared.models.IdTypes.GameLoopId
-import shared.models.IdTypes.SnakeId
-import shared.models.Moves.Move
-import shared.models.Moves.moves
+import play.api.libs.json.{JsError, JsResult, JsSuccess, JsValue, Json, Reads, Writes}
+import shared.models.IdTypes.{GameLoopId, SnakeId}
+import shared.models.Moves.{Move, moves}
 
 object GameNotifJsonImplicits {
 

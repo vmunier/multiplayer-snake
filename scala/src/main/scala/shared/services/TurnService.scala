@@ -1,7 +1,6 @@
 package shared.services
 
 import shared.models.GameState
-import shared.models.Snake
 
 object TurnService extends SnakeServiceLayer {
   def afterTurn(gameState: GameState): GameState = {

@@ -1,7 +1,7 @@
 package shared.services
 
-import shared.models.Snake
 import shared.models.Moves._
+import shared.models.Snake
 
 object MoveService {
   def isValidMove(snake: Snake, move: Move): Boolean = {

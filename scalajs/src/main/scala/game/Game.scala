@@ -1,24 +1,15 @@
 package game
 
+import models.GameLoopState
+import org.scalajs.dom.WebSocket
+import services.GameLoopStateService
+import shared.models.IdTypes.{GameLoopId, GameLoopIdToLong, SnakeId}
+import shared.models.Moves.Move
+import shared.models.{GameConstants, GameLoopNotif, GameSnakes, GameState, SnakeMove}
+import shared.services.{GameStateService, MoveService, TurnService}
+
 import scala.scalajs.js
 import scala.scalajs.js.Dynamic.{global => g}
-import org.scalajs.dom.WebSocket
-import shared.models.GameConstants.NbBlocksInHeight
-import shared.models.GameConstants.NbBlocksInWidth
-import shared.models.GameLoopNotif
-import shared.models.GameSnakes
-import shared.models.GameState
-import shared.models.IdTypes.GameLoopId
-import shared.models.IdTypes.GameLoopIdToLong
-import shared.models.IdTypes.SnakeId
-import shared.models.SnakeMove
-import shared.services.GameStateService
-import shared.services.MoveService
-import shared.services.TurnService
-import models.GameLoopState
-import services.GameLoopStateService
-import shared.models.Moves.Move
-import shared.models.GameConstants
 
 trait PlayerSnakeIdAccess {
   def playerSnakeId: SnakeId

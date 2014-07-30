@@ -1,8 +1,6 @@
 package shared.services
 
-import shared.models.Block
-import shared.models.Colors
-import shared.models.Position
+import shared.models.{Block, Colors, Position}
 
 object BlockService {
   def randomNewBlock(availablePositions: IndexedSeq[Position]): Block = {

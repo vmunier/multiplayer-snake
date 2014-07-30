@@ -1,9 +1,6 @@
 package shared.services
 
-import shared.models.Snake
-import shared.models.Position
-import shared.models.Block
-import shared.models.GameConstants
+import shared.models.{Block, Position, Snake}
 
 case class SnakeService(nbBlocksInWidth: Int, nbBlocksInHeight: Int) {
   def moveSnakes(snakes: Seq[Snake]): Seq[Snake] = {

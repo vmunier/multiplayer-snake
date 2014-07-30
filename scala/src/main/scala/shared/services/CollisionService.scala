@@ -1,8 +1,6 @@
 package shared.services
 
-import shared.models.GameSnakes
-import shared.models.Snake
-import shared.models.GameConstants
+import shared.models.{GameSnakes, Snake}
 
 object CollisionService extends SnakeServiceLayer {
 

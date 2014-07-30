@@ -1,16 +1,9 @@
 package game
+import shared.models.IdTypes.{GameLoopId, SnakeId}
+import shared.models.{Block, GameInitNotif, GameLoopNotif, Moves, Position, Snake, SnakeMove}
+
 import scala.scalajs.js
-import js.Dynamic.{ global => g }
-import shared.models.GameNotif
-import shared.models.Block
-import shared.models.Position
-import shared.models.Moves
-import shared.models.SnakeMove
-import shared.models.IdTypes.SnakeId
-import shared.models.IdTypes.GameLoopId
-import shared.models.GameLoopNotif
-import shared.models.GameInitNotif
-import shared.models.Snake
+import scala.scalajs.js.Dynamic.{global => g}
 
 object GameNotifParser {
   def parseGameLoopNotif(jsGameLoopNotif: JsGameLoopNotif): GameLoopNotif = {
