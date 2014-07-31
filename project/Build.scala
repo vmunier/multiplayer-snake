@@ -42,7 +42,7 @@ object ApplicationBuild extends Build with UniversalKeys {
       scalajsOutputDir := (crossTarget in Compile).value / "classes" / "public" / "javascripts",
       compile in Compile <<= (compile in Compile) dependsOn (fastOptJS in (scalajs, Compile)),
       dist <<= dist dependsOn (fullOptJS in (scalajs, Compile)),
-      libraryDependencies ++= Dependencies.scalajvm,
+      libraryDependencies ++= Dependencies.scalajvm.value,
       includeFilter in (Assets, LessKeys.less) := "*.less",
       excludeFilter in (Assets, LessKeys.less) := "_*.less",
       commands += preStartCommand,
@@ -61,7 +61,7 @@ object ApplicationBuild extends Build with UniversalKeys {
       scalaVersion := Versions.scala,
       persistLauncher := true,
       persistLauncher in Test := false,
-      libraryDependencies ++= Dependencies.scalajs
+      libraryDependencies ++= Dependencies.scalajs.value
     ) ++ uTestSettings ++ sharedDirectorySettings
 
   lazy val uTestSettings = Seq(
@@ -79,7 +79,7 @@ object ApplicationBuild extends Build with UniversalKeys {
       name := "shared-scala-game",
       scalaVersion := Versions.scala,
       EclipseKeys.skipProject := true,
-      libraryDependencies ++= Dependencies.shared
+      libraryDependencies ++= Dependencies.shared.value
     )
 
   lazy val sharedDirectorySettings = Seq(
@@ -103,20 +103,20 @@ object ApplicationBuild extends Build with UniversalKeys {
 }
 
 object Dependencies {
-  val shared = Seq(
+  val shared = Def.setting(Seq(
     "com.typesafe.play" %% "play-json" % "2.3.2",
     "com.lihaoyi" %%% "utest" % "0.1.6"
-  )
+  ))
 
-  val scalajvm = Seq(
+  val scalajvm = Def.setting(shared.value ++ Seq(
     "org.webjars" %% "webjars-play" % "2.3.0",
     "org.webjars" % "jquery" % "1.9.0"
-  ) ++ shared
+  ))
 
-  val scalajs = Seq(
+  val scalajs = Def.setting(shared.value ++ Seq(
     "org.scala-lang.modules.scalajs" %%% "scalajs-dom" % Versions.scalajsDom,
     "org.scala-lang.modules.scalajs" %% "scalajs-jasmine-test-framework" % scalaJSVersion % "test"
-  ) ++ shared
+  ))
 }
 
 object Versions {
