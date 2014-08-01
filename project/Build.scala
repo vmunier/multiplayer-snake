@@ -9,7 +9,6 @@ import com.typesafe.sbt.web.SbtWeb.autoImport._
 import com.typesafe.sbt.less.SbtLess.autoImport._
 import play.Play.autoImport._
 import PlayKeys._
-import utest.jsrunner._
 
 object ApplicationBuild extends Build with UniversalKeys {
 
@@ -62,17 +61,7 @@ object ApplicationBuild extends Build with UniversalKeys {
       persistLauncher := true,
       persistLauncher in Test := false,
       libraryDependencies ++= Dependencies.scalajs
-    ) ++ uTestSettings ++ sharedDirectorySettings
-
-  lazy val uTestSettings = Seq(
-    (loadedTestFrameworks in Test) := {
-      (loadedTestFrameworks in Test).value.updated(
-        sbt.TestFramework(classOf[JsFramework].getName),
-        new JsFramework(environment = (jsEnv in Test).value)
-      )
-    },
-    testLoader := scala.scalajs.sbtplugin.testing.JSClasspathLoader((execClasspath in Compile).value)
-  )
+    ) ++ sharedDirectorySettings
 
   lazy val sharedScalaSettings =
     Seq(
@@ -104,12 +93,10 @@ object ApplicationBuild extends Build with UniversalKeys {
 
 object Dependencies {
   val shared = Seq(
-    "com.typesafe.play" %% "play-json" % "2.3.2",
-    "com.lihaoyi" %%% "utest" % "0.1.6"
+    "com.typesafe.play" %% "play-json" % "2.3.2"
   )
 
   val scalajvm = Seq(
-    "org.webjars" %% "webjars-play" % "2.3.0",
     "org.webjars" % "jquery" % "1.9.0"
   ) ++ shared
 
