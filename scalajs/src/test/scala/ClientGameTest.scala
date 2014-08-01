@@ -2,10 +2,8 @@ package tests
 
 import shared.models.IdTypes.GameLoopId
 import shared.models.Moves._
-import utest._
 import shared.models.{SnakeMove, Position, GameLoopNotif}
 import scala.scalajs.test.JasmineTest
-
 
 object ClientGameTest extends BaseGameTest {
 
