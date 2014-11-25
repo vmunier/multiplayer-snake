@@ -1,5 +1,7 @@
 @(gameUUID: java.util.UUID, gameName: String, maybeCreatorUUID: Option[java.util.UUID])
 
+@import play.api.Play
+
 <!DOCTYPE html>
 
 <html>
@@ -20,10 +22,11 @@
       }
     </div>
 
-    <script src="@routes.Assets.at("javascripts/scalajs-game-fastopt.js")" type="text/javascript"></script>
-    <!-- for production (play dist), use the optimized version instead -->
-    <!-- <script src="@routes.Assets.at("javascripts/scalajs-game-opt.js")" type="text/javascript"></script> -->
-
+    @if(Play.isProd(Play.current)) {
+      <script src="@routes.Assets.at("javascripts/scalajs-game-opt.js")" type="text/javascript"></script>
+    } else {
+      <script src="@routes.Assets.at("javascripts/scalajs-game-fastopt.js")" type="text/javascript"></script>
+    }
     <script src="@routes.Assets.at("javascripts/scalajs-game-launcher.js")" type="text/javascript"></script>
 
     <script type="text/javascript" charset="utf-8" src="@routes.Application.gameJs(gameUUID, maybeCreatorUUID)"></script>
